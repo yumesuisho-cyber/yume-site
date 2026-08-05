@@ -1,0 +1,703 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>よるを浄める</title>
+<style>
+:root{
+  --ink:#E6E1F5; --soft:#A79EC8; --violet:#9B7CD6; --pale:#D9CCFF;
+  --gold:#C9A227; --bg1:#0B0718; --bg2:#150E2C;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;   /* dvhが後（対応端末で優先） */
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#stage{flex:1;min-height:0;position:relative;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,var(--bg2),var(--bg1) 70%)}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+
+/* 画面に重ねる言葉 */
+.veil{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;gap:2px;padding:24px 18px;
+  background:radial-gradient(75% 60% at 50% 42%,rgba(11,7,24,.12),rgba(11,7,24,.86))}
+#vOver{background:radial-gradient(80% 60% at 50% 45%,rgba(21,14,44,.72),rgba(11,7,24,.92))}
+.veil.on{display:flex}
+.veil h1{margin:0 0 4px;font-family:"Yu Mincho","YuMincho","Hiragino Mincho ProN",serif;
+  font-weight:500;font-size:clamp(30px,8vw,46px);letter-spacing:.16em;color:var(--pale);
+  text-shadow:0 0 16px rgba(155,124,214,.7),0 0 44px rgba(155,124,214,.4)}
+.veil h2{margin:0 0 6px;font-family:"Yu Mincho","YuMincho","Hiragino Mincho ProN",serif;
+  font-weight:500;font-size:clamp(20px,5.4vw,28px);letter-spacing:.12em;color:var(--pale);
+  text-shadow:0 0 14px rgba(155,124,214,.6)}
+.veil p{margin:0;font-size:clamp(13px,3.6vw,15px);color:var(--soft);letter-spacing:.1em;line-height:2}
+.veil .big{font-size:clamp(17px,4.6vw,20px);color:var(--ink);letter-spacing:.12em;margin:6px 0 2px}
+.rule{width:132px;height:1px;margin:14px auto;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.75}
+/* タイトルの一枚絵。縁を落として夜空になじませ、文字を絵の月のあたりに重ねる */
+.titlewrap{position:relative;display:flex;flex-direction:column;align-items:center}
+.titlewrap.art{width:min(360px,78vw,52vh);aspect-ratio:1/1;margin-bottom:2px}
+.titlewrap.art #titleArt{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-mask-image:radial-gradient(closest-side,#000 72%,rgba(0,0,0,.35) 90%,transparent 100%);
+  mask-image:radial-gradient(closest-side,#000 72%,rgba(0,0,0,.35) 90%,transparent 100%)}
+.titlewrap.art h1{position:absolute;left:0;right:0;top:19%;transform:translateY(-50%);margin:0;
+  text-shadow:0 0 4px rgba(11,7,24,.92),0 0 14px rgba(11,7,24,.8),
+              0 0 24px rgba(155,124,214,.8),0 0 52px rgba(155,124,214,.45)}
+.titlewrap.plain #titleArt{width:min(160px,36vw);aspect-ratio:1/1;margin:0 0 8px;object-fit:contain;
+  filter:drop-shadow(0 0 26px rgba(155,124,214,.6));animation:float 5.5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(-7px)}50%{transform:translateY(7px)}}
+/* 画像がどれも無いときの、淡く光る紫の球 */
+#orb{display:none;position:relative;width:min(150px,34vw);aspect-ratio:1/1;margin:0 0 8px;
+  border-radius:50%;animation:float 5.5s ease-in-out infinite;
+  background:radial-gradient(circle at 50% 42%,#FFFFFF 0%,#D9CCFF 38%,#9B7CD6 72%,rgba(155,124,214,.15) 100%);
+  box-shadow:0 0 40px rgba(155,124,214,.6)}
+#orb.on{display:block}
+#orb::before,#orb::after{content:"";position:absolute;top:-14%;width:30%;height:34%;
+  background:#B79BE8;clip-path:polygon(50% 0,100% 100%,0 100%)}
+#orb::before{left:10%;transform:rotate(-12deg)}
+#orb::after{right:10%;transform:rotate(12deg)}
+button.soft{
+  margin-top:16px;font:inherit;font-size:clamp(15px,4.2vw,17px);letter-spacing:.14em;cursor:pointer;
+  padding:14px 30px;border-radius:999px;color:var(--pale);
+  border:1px solid rgba(217,204,255,.5);background:rgba(155,124,214,.16);
+  box-shadow:0 0 18px rgba(155,124,214,.35);transition:background .3s ease}
+button.soft:hover{background:rgba(155,124,214,.3)}
+.hint{margin-top:18px;font-size:clamp(11px,3.2vw,13px);color:var(--soft);opacity:.85;line-height:1.9}
+
+/* 右下の小さなボタン */
+#od{position:absolute;right:14px;bottom:14px;width:60px;height:60px;border-radius:50%;
+  display:none;place-items:center;font-size:20px;cursor:pointer;color:var(--pale);
+  border:1px solid rgba(217,204,255,.35);background:rgba(21,14,44,.6);
+  box-shadow:0 0 14px rgba(155,124,214,.25);opacity:.5;transition:opacity .3s ease}
+#od.show{display:grid}
+#od.ready{opacity:1;border-color:var(--pale);animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{
+  0%,100%{box-shadow:0 0 14px rgba(217,204,255,.5);background:rgba(155,124,214,.22)}
+  50%    {box-shadow:0 0 30px rgba(217,204,255,.95),0 0 60px rgba(155,124,214,.5);
+          background:rgba(155,124,214,.4)}}
+#od span{font-size:9px;letter-spacing:.08em;display:block;margin-top:1px;opacity:.85}
+
+#help{flex:0 0 auto;text-align:center;font-size:11.5px;line-height:1.8;color:var(--soft);
+  padding:7px 10px;opacity:.85}
+@media (max-height:520px){#help{display:none}}
+/* 横向きなど、画面が低いときも収まるように */
+.veil{overflow-y:auto}
+@media (max-height:600px){
+  .titlewrap.art{width:min(300px,62vw,44vh)}
+  .veil h1{font-size:clamp(22px,5.6vw,32px)}
+  button.soft{margin-top:10px;padding:11px 24px}
+  .hint{margin-top:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  button.soft{transition:none}
+  .titleart,#orb,#od.ready{animation:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="c"></canvas>
+
+    <div class="veil on" id="vTitle">
+      <div class="titlewrap plain" id="titleWrap">
+        <img id="titleArt" alt="">
+        <div id="orb" aria-hidden="true"></div>
+        <h1>よるを浄める</h1>
+      </div>
+      <p>ルナと歩く、しずかな夜</p>
+      <button class="soft" id="btnStart" type="button">はじめる</button>
+      <p class="hint">指でルナを動かす ／ 光は自動でこぼれます<br>
+        （パソコン: ←→↑↓ で移動 ／ スペースで光を放つ）</p>
+    </div>
+
+    <div class="veil" id="vOver">
+      <h2>今夜はここまで。</h2>
+      <div class="rule"></div>
+      <p class="big" id="overScore">浄めた数 0</p>
+      <p>ゆっくり休んで、また明日🌙</p>
+      <button class="soft" id="btnAgain" type="button">もう一度、夜を歩く</button>
+    </div>
+
+    <button id="od" type="button" aria-label="しずけさ">🌙<span>しずけさ</span></button>
+  </div>
+  <p id="help">指でルナを動かす／光は自動でこぼれます（パソコン: ←→↑↓ で移動／スペースで光を放つ）<br>
+    右下の🌙は「しずけさ」。満ちると押せて、しばらく時がゆっくり流れます（パソコン: Shift でも）</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("c"), g=cv.getContext("2d");
+var stage=document.getElementById("stage");
+var vTitle=document.getElementById("vTitle"), vOver=document.getElementById("vOver");
+var odBtn=document.getElementById("od"), overScore=document.getElementById("overScore");
+var W=360,H=640,dpr=1;
+var rnd=function(a,b){return a+Math.random()*(b-a);};
+
+/* ---------- イラスト（無くても動く） ---------- */
+function loadImg(names){
+  var im=new Image(), i=0, out={img:im,ok:false};
+  im.onload=function(){ if(im.naturalWidth)out.ok=true; };
+  im.onerror=function(){ i++; if(i<names.length)im.src=names[i]; };
+  im.src=names[0];
+  return out;
+}
+var luna=loadImg(["../illust/luna-sprite.png","illust/luna-sprite.png"]);
+var titleHasArt=false;
+(function(){   /* タイトル絵: luna-title → 無ければ luna-sprite → どちらも無ければ光る球 */
+  var el=document.getElementById("titleArt"), wrap=document.getElementById("titleWrap");
+  var names=["../illust/luna-title.png","illust/luna-title.png",
+             "../illust/luna-sprite.png","illust/luna-sprite.png"], i=0;
+  el.onerror=function(){
+    i++;
+    if(i<names.length){ el.src=names[i]; }
+    else { el.style.display="none"; document.getElementById("orb").classList.add("on"); }
+  };
+  el.onload=function(){
+    if(i<2){                       /* 一枚絵が使えたときだけ、文字を絵に重ねる配置にする */
+      titleHasArt=true;
+      wrap.classList.remove("plain"); wrap.classList.add("art");
+    }
+  };
+  el.src=names[0];
+})();
+
+/* ---------- 音（やわらかく・外部通信なし） ---------- */
+var AC=null,MG=null;
+function aInit(){
+  if(AC)return;
+  try{
+    var A=window.AudioContext||window.webkitAudioContext; if(!A)return;
+    AC=new A(); MG=AC.createGain(); MG.gain.value=.24; MG.connect(AC.destination);
+  }catch(e){AC=null;}
+}
+function tone(f,dur,type,vol,f2,delay){
+  if(!AC)return;
+  var t=AC.currentTime+(delay||0), o=AC.createOscillator(), gn=AC.createGain();
+  o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  gn.gain.setValueAtTime(.0001,t);
+  gn.gain.exponentialRampToValueAtTime(vol,t+dur*.25);      /* ゆるい立ち上がり */
+  gn.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(gn); gn.connect(MG); o.start(t); o.stop(t+dur+.03);
+}
+var sLight  =function(){tone(1180,.06,"sine",.022,1560);};
+var sPurify =function(){tone(700,.5,"triangle",.09,1050); tone(1400,.6,"sine",.035,null,.05);};
+var sHeart  =function(){tone(300,.7,"sine",.09,150);};
+var sHush   =function(){[523,659,784,1046].forEach(function(f,i){tone(f,.7,"sine",.06,null,i*.07);});};
+var sBig    =function(){[392,523,659,784,1046,1318].forEach(function(f,i){
+                tone(f,1.3,"sine",.075,null,i*.09); });
+              tone(196,1.6,"triangle",.05);};
+var sNight  =function(){[660,523,392].forEach(function(f,i){tone(f,1.1,"sine",.07,null,i*.22);});};
+
+/* ---------- 状態 ---------- */
+var mode="title", paused=false, keys={};
+var L,motes,haze,spark,ring,stars,big;
+var score,hearts,od,odT,t,spawnT,shine,msg,msgT,pointer=null;
+var combo,comboT,nextBig,bigWave,hushT,moonLit;
+
+function reset(){
+  L={x:W/2,y:H*.76,inv:1.6,cool:0,ph:0};
+  motes=[];haze=[];spark=[];ring=[];big=null;
+  score=0;hearts=3;od=0;odT=0;t=0;spawnT=1.2;shine=0;msg="";msgT=0;pointer=null;
+  combo=0;comboT=0;nextBig=30;bigWave=0;hushT=0;moonLit=0;
+  odBtn.classList.remove("ready");
+}
+function makeStars(){
+  stars=[];
+  for(var i=0;i<90;i++)stars.push({x:Math.random(),y:Math.random(),z:rnd(.3,1.6),tw:rnd(0,6.3)});
+}
+makeStars();
+
+/* ---------- 画面サイズ（回転しても崩れない） ---------- */
+function resize(){
+  var w=Math.max(200,stage.clientWidth), h=Math.max(280,stage.clientHeight);
+  dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+  g.setTransform(dpr,0,0,dpr,0,0);
+  var oldW=W,oldH=H; W=w; H=h;
+  if(L){                                   /* 位置を比率で引き継ぐ */
+    L.x=Math.min(W-24,Math.max(24,L.x/oldW*W));
+    L.y=Math.min(H-20,Math.max(H*.35,L.y/oldH*H));
+  }
+}
+addEventListener("resize",resize);
+addEventListener("orientationchange",function(){setTimeout(resize,120);});
+if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);
+resize(); reset();
+
+/* ---------- 靄（3種類・形と動きで区別） ---------- */
+var KIND={
+  drift:{r:22,hp:1,col:"#5B4A86"},   /* ただよう */
+  seek :{r:18,hp:2,col:"#7A5A9E"},   /* よってくる */
+  dense:{r:31,hp:4,col:"#3E3160"}    /* おもい */
+};
+function lobeSet(n){
+  var a=[];
+  for(var i=0;i<n;i++)a.push({a:rnd(0,6.3),d:rnd(.15,.55),s:rnd(.5,.9),sp:rnd(.3,.9),
+    w:rnd(.5,1.25),w2:rnd(.35,1.0),al:rnd(.75,1)});
+  return a;
+}
+function spawnHaze(kind,px,py){
+  var r=Math.random(), k=kind||((r<.56)?"drift":(r<.85)?"seek":"dense");
+  var d=KIND[k], ramp=Math.min(1.8,1+t*.006);
+  haze.push({k:k,x:(px===undefined)?rnd(40,W-40):px,y:(py===undefined)?-d.r-14:py,
+    r:d.r*rnd(.85,1.15),hp:d.hp,col:d.col,
+    v:rnd(.55,1.0)*ramp,ph:rnd(0,6.3),lobes:lobeSet(4),fade:0});
+}
+/* 光の粒。連続して浄めるほど金の星屑が増える */
+function scatter(x,y,r,n,power){
+  var lux=Math.min(1,combo/10);
+  for(var i=0;i<n;i++){
+    var a=rnd(0,6.3), s=rnd(.25,1.15)*(power||1);
+    var gold=Math.random()<(.08+lux*.30);
+    spark.push({x:x+Math.cos(a)*r*.5,y:y+Math.sin(a)*r*.5,
+      vx:Math.cos(a)*s,vy:Math.sin(a)*s-.25,l:rnd(.9,1.8)+lux*.5,m:.975,
+      c:gold?(Math.random()<.5?"#FFE9A8":"#C9A227"):(Math.random()<.5?"#FFFFFF":"#D9CCFF"),
+      s:rnd(1.4,2.8)+(gold?.6:0), star:gold});
+  }
+}
+function purify(m){
+  score++; moonLit=Math.min(1,moonLit+.012);
+  combo++; comboT=2.6;
+  od=Math.min(100,od+(m.k==="dense"?9:m.k==="seek"?6:4.5));
+  if(od>=100)odBtn.classList.add("ready");
+  var lux=Math.min(1,combo/10);
+  scatter(m.x,m.y,m.r,(m.k==="dense"?26:16)+Math.round(lux*18),1);
+  ring.push({x:m.x,y:m.y,r:m.r*.6,max:m.r*(3.2+lux*1.4),l:1});
+  shine=Math.min(.5,shine+.12);
+  sPurify();
+  if(!big&&score>=nextBig){ nextBig+=30; spawnBig(); }
+}
+
+/* ---------- おおきな靄（溜まりに溜まったもやもや） ---------- */
+function spawnBig(){
+  bigWave++;
+  var r=Math.max(54,Math.min(84,Math.min(W,H)*.17));
+  big={x:W/2,y:-r-30,r:r,fill:0,need:26+bigWave*8,t:0,shed:2.4,enter:1,
+       dir:(Math.random()<.5?-1:1),lobes:lobeSet(11)};
+  hushT=1.1;                    /* 予告はしない。ほんの少し、しんとするだけ */
+}
+function purifyBig(){
+  score+=3; moonLit=Math.min(1,moonLit+.09);
+  hearts=Math.min(5,hearts+1);
+  msg="こころが ひとつ もどりました"; msgT=2.4;
+  for(var w=0;w<4;w++)scatter(big.x,big.y,big.r*(.4+w*.22),34,.7+w*.25);
+  ring.push({x:big.x,y:big.y,r:big.r*.7,max:big.r*4.6,l:1.4});
+  ring.push({x:big.x,y:big.y,r:big.r*.3,max:big.r*6.4,l:1.1});
+  shine=Math.min(.62,shine+.34);
+  od=Math.min(100,od+18); if(od>=100)odBtn.classList.add("ready");
+  sBig();
+  big=null;
+}
+function touched(){
+  if(L.inv>0)return;
+  hearts--; L.inv=2.4; od=Math.max(0,od-25);
+  if(od<100)odBtn.classList.remove("ready");
+  for(var i=0;i<24;i++){var a=rnd(0,6.3),s=rnd(.3,1.1);
+    spark.push({x:L.x,y:L.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(.6,1.2),m:.96,c:"#D9CCFF",s:rnd(1.5,3)});}
+  ring.push({x:L.x,y:L.y,r:14,max:90,l:1});
+  sHeart();
+  if(hearts<=0)finish();
+}
+function finish(){
+  mode="over"; overScore.textContent="浄めた数 "+score;
+  vOver.classList.add("on"); odBtn.classList.remove("show");
+  sNight();
+}
+
+/* ---------- 進行 ---------- */
+function update(dt){
+  var es=odT>0?.34:1;                 /* しずけさ：靄の時間だけゆっくり */
+  if(odT>0)odT-=dt;
+  odBtn.classList.toggle("ready",od>=100&&odT<=0);   /* 押せる時だけ、ふわっと光る */
+  if(msgT>0)msgT-=dt;
+  if(hushT>0)hushT-=dt;
+  if(comboT>0){comboT-=dt; if(comboT<=0)combo=0;}
+  if(L.inv>0)L.inv-=dt;
+  if(shine>0)shine=Math.max(0,shine-dt*.9);
+  t+=dt; L.ph+=dt*2;
+
+  var sp=4.6*dt*60;
+  if(keys.ArrowLeft)L.x-=sp; if(keys.ArrowRight)L.x+=sp;
+  if(keys.ArrowUp)L.y-=sp;   if(keys.ArrowDown)L.y+=sp;
+  L.x=Math.max(22,Math.min(W-22,L.x));
+  L.y=Math.max(H*.3,Math.min(H-22,L.y));
+
+  /* 光は自動でこぼれる。スペースを押している間は少し早く */
+  L.cool-=dt;
+  if(L.cool<=0){
+    L.cool=(keys[" "]?.13:.22)*(odT>0?.55:1);
+    motes.push({x:L.x,y:L.y-26,vy:-8.2,ph:rnd(0,6.3)});
+    if(hushT<=0)sLight();                       /* しんとしている間は音も控える */
+  }
+  for(var i=motes.length-1;i>=0;i--){
+    var b=motes[i]; b.y+=b.vy*dt*60; b.ph+=dt*10;
+    if(b.y<-20)motes.splice(i,1);
+  }
+
+  if(hushT<=0){
+    spawnT-=dt;
+    if(spawnT<=0){
+      spawnT=Math.max(.62,1.5-t*.009)*(big?1.7:1);   /* おおきな靄がいる間は控えめに */
+      if(haze.length<20)spawnHaze();
+    }
+  }
+
+  /* おおきな靄 */
+  if(big){
+    var bk=dt*60*es;
+    if(big.enter){
+      big.y+=1.15*bk; if(big.y>=H*.22){big.y=H*.22;big.enter=0;}
+    }else{
+      big.t+=dt*es;
+      big.x+=big.dir*.55*bk;
+      if(big.x<big.r*.75||big.x>W-big.r*.75)big.dir*=-1;
+      big.y=H*.22+Math.sin(big.t*.7)*14;
+      big.shed-=dt*es;
+      if(big.shed<=0){
+        big.shed=rnd(2.2,3.6);
+        if(haze.length<20)spawnHaze("drift",big.x+rnd(-big.r*.6,big.r*.6),big.y+big.r*.5);
+      }
+    }
+    for(var bq=motes.length-1;bq>=0;bq--){
+      var bm=motes[bq];
+      if(Math.hypot(bm.x-big.x,bm.y-big.y)<big.r*.92){
+        motes.splice(bq,1); big.fill++;
+        spark.push({x:bm.x,y:bm.y,vx:rnd(-.4,.4),vy:rnd(-.6,-.1),l:.6,m:.96,
+          c:Math.random()<.3?"#FFE9A8":"#FFFFFF",s:2});
+        if(big.fill>=big.need){ purifyBig(); break; }
+      }
+    }
+    if(big&&!big.enter&&L.inv<=0&&Math.hypot(big.x-L.x,big.y-L.y)<big.r*.62+16)touched();
+  }
+
+  for(var j=haze.length-1;j>=0;j--){
+    var m=haze[j], k=dt*60*es;
+    m.ph+=dt*1.6*es;
+    if(m.k==="drift"){ m.y+=m.v*k; m.x+=Math.sin(m.ph)*1.5*k; }
+    else if(m.k==="seek"){ m.y+=m.v*.78*k; m.x+=(L.x>m.x?1:-1)*1.35*k; }
+    else { m.y+=m.v*.62*k; m.x+=Math.cos(m.ph*.7)*.9*k; }
+    m.x=Math.max(m.r*.4,Math.min(W-m.r*.4,m.x));
+    if(m.y>H+m.r+20){haze.splice(j,1);continue;}          /* 通り過ぎても咎めない */
+    for(var q=motes.length-1;q>=0;q--){
+      var b2=motes[q];
+      if(Math.abs(b2.x-m.x)<m.r+6&&Math.abs(b2.y-m.y)<m.r+6&&
+         Math.hypot(b2.x-m.x,b2.y-m.y)<m.r+5){
+        motes.splice(q,1); m.hp--;
+        spark.push({x:b2.x,y:b2.y,vx:rnd(-.5,.5),vy:rnd(-.5,.2),l:.5,m:.95,c:"#FFFFFF",s:2});
+        if(m.hp<=0){ purify(m); haze.splice(j,1); break; }
+      }
+    }
+    if(m.hp>0&&L.inv<=0&&Math.hypot(m.x-L.x,m.y-L.y)<m.r*.72+16){ haze.splice(j,1); touched(); }
+  }
+
+  for(var p=spark.length-1;p>=0;p--){
+    var s2=spark[p];
+    s2.x+=s2.vx; s2.y+=s2.vy; s2.vx*=s2.m; s2.vy=s2.vy*s2.m-.02;   /* ゆっくり昇る */
+    s2.l-=dt*.85; if(s2.l<=0)spark.splice(p,1);
+  }
+  for(var r2=ring.length-1;r2>=0;r2--){
+    var rr=ring[r2]; rr.r+=(rr.max-rr.r)*.09+.6; rr.l-=dt*1.1;
+    if(rr.l<=0)ring.splice(r2,1);
+  }
+}
+/* ---------- 描画 ---------- */
+/* 浄めるほど夜が明けていく: 深い紺 → 藍 → 夜明けの気配 */
+function mix(c1,c2,p){
+  return "rgb("+Math.round(c1[0]+(c2[0]-c1[0])*p)+","+
+                Math.round(c1[1]+(c2[1]-c1[1])*p)+","+
+                Math.round(c1[2]+(c2[2]-c1[2])*p)+")";
+}
+function dawnLevel(){ return Math.min(1,(mode==="play"?score:0)/120); }
+function drawMoon(d){
+  var big1=(mode!=="play");
+  if(big1&&titleHasArt&&mode==="title")return;   /* 一枚絵に月があるので、こちらは描かない */
+  var mx=big1?W*.5:W*.78, my=big1?H*.40:H*.15;
+  var mr=Math.min(W,H)*(big1?.26:.10);
+  var lit=.5+d*.3+moonLit*.2;
+  var gl=g.createRadialGradient(mx,my,mr*.5,mx,my,mr*3.3);
+  gl.addColorStop(0,"rgba(232,226,255,"+(.16+lit*.16)+")");
+  gl.addColorStop(.45,"rgba(180,160,240,"+(.07+lit*.07)+")");
+  gl.addColorStop(1,"rgba(155,124,214,0)");
+  g.fillStyle=gl; g.beginPath(); g.arc(mx,my,mr*3.3,0,6.283); g.fill();
+  var bd=g.createRadialGradient(mx-mr*.3,my-mr*.3,mr*.1,mx,my,mr);
+  bd.addColorStop(0,"rgba(255,253,246,"+(.72+lit*.28)+")");
+  bd.addColorStop(.75,"rgba(233,226,255,"+(.5+lit*.35)+")");
+  bd.addColorStop(1,"rgba(206,193,246,"+(.28+lit*.3)+")");
+  g.fillStyle=bd; g.beginPath(); g.arc(mx,my,mr,0,6.283); g.fill();
+  g.globalAlpha=.10+lit*.06; g.fillStyle="#B9A8E0";   /* 淡い海（模様） */
+  g.beginPath(); g.arc(mx-mr*.28,my-mr*.18,mr*.26,0,6.283); g.fill();
+  g.beginPath(); g.arc(mx+mr*.22,my+mr*.12,mr*.19,0,6.283); g.fill();
+  g.beginPath(); g.arc(mx+mr*.02,my+mr*.42,mr*.13,0,6.283); g.fill();
+  g.globalAlpha=1;
+}
+function drawSky(){
+  var d=dawnLevel();
+  g.fillStyle=mix([11,7,24],[38,29,74],d); g.fillRect(0,0,W,H);
+  var grd=g.createRadialGradient(W*.5,0,0,W*.5,0,H*1.05);
+  grd.addColorStop(0,mix([35,22,74],[74,52,116],d).replace("rgb(","rgba(").replace(")",",.95)"));
+  grd.addColorStop(1,"rgba(11,7,24,0)");
+  g.fillStyle=grd; g.fillRect(0,0,W,H);
+  if(d>.05){                                  /* 地平の、夜明けの気配 */
+    var hz=g.createLinearGradient(0,H,0,H*.55);
+    hz.addColorStop(0,"rgba(196,140,150,"+(d*.20)+")");
+    hz.addColorStop(.5,"rgba(150,110,170,"+(d*.10)+")");
+    hz.addColorStop(1,"rgba(150,110,170,0)");
+    g.fillStyle=hz; g.fillRect(0,H*.55,W,H*.45);
+  }
+  drawMoon(d);
+  var dim=(hushT>0?.45:1)*(1-d*.35);          /* 明けるほど星は控えめに */
+  for(var i=0;i<stars.length;i++){
+    var s=stars[i], a=.25+Math.abs(Math.sin(s.tw))*.55;
+    g.globalAlpha=a*(.4+s.z*.4)*dim; g.fillStyle=s.z>1.1?"#EDE6FF":"#9C93C6";
+    g.fillRect(s.x*W,s.y*H,s.z,s.z*1.6);
+  }
+  g.globalAlpha=1;
+}
+function drawBig(){
+  var m=big;
+  /* 小さな靄と同じ描き方。ただし塊を多くして、形をゆっくり崩す */
+  softBlob(m.x,m.y,m.r,"#2E2450",m.lobes,m.t,true);
+  /* 削るのではなく、まわりの光の輪が満ちていく */
+  var p=Math.min(1,m.fill/m.need), R=m.r*1.42;
+  g.lineWidth=3; g.lineCap="round";
+  g.strokeStyle="rgba(217,204,255,.16)";
+  g.beginPath(); g.arc(m.x,m.y,R,0,6.283); g.stroke();
+  g.save();
+  g.shadowColor="rgba(232,226,255,.9)"; g.shadowBlur=14+p*16;
+  g.strokeStyle=p<1?"#D9CCFF":"#FFFFFF";
+  g.beginPath(); g.arc(m.x,m.y,R,-1.5708,-1.5708+6.283*p); g.stroke();
+  g.restore();
+  if(p>.7){                                   /* 満ちるほど、輪の内側がほのかに光る */
+    var ig=g.createRadialGradient(m.x,m.y,m.r*.2,m.x,m.y,R);
+    ig.addColorStop(0,"rgba(217,204,255,"+((p-.7)*.28)+")");
+    ig.addColorStop(1,"rgba(217,204,255,0)");
+    g.fillStyle=ig; g.beginPath(); g.arc(m.x,m.y,R,0,6.283); g.fill();
+  }
+  g.lineWidth=1; g.lineCap="butt";
+}
+/* 輪郭のぼやけた暗い塊。丸をいくつも薄く重ね、形をゆっくり崩して「もやもや」にする */
+function softBlob(x,y,r,col,lobes,ph,wob){
+  var vg=g.createRadialGradient(x,y,r*.25,x,y,r*1.5);   /* 外側のにじみ */
+  vg.addColorStop(0,col+"4D"); vg.addColorStop(.55,col+"22"); vg.addColorStop(1,col+"00");
+  g.fillStyle=vg; g.beginPath(); g.arc(x,y,r*1.5,0,6.283); g.fill();
+  for(var i=0;i<lobes.length;i++){
+    var lo=lobes[i];
+    var a=lo.a+ph*lo.sp*(wob?.45:1);
+    var sw=wob?(1+Math.sin(ph*lo.w+i)*.26):1;          /* ふくらんだり縮んだり */
+    var dw=wob?(1+Math.sin(ph*lo.w2+i*1.7)*.3):1;
+    var rr=r*lo.s*sw;
+    var cx=x+Math.cos(a)*r*lo.d*dw, cy=y+Math.sin(a)*r*lo.d*dw*.85;
+    var al=Math.round((lo.al||1)*255).toString(16); if(al.length<2)al="0"+al;
+    var gr=g.createRadialGradient(cx,cy,rr*.12,cx,cy,rr);
+    gr.addColorStop(0,col+al); gr.addColorStop(.55,col+"77"); gr.addColorStop(1,col+"00");
+    g.fillStyle=gr; g.beginPath(); g.arc(cx,cy,rr,0,6.283); g.fill();
+  }
+}
+function drawHaze(m){
+  softBlob(m.x,m.y,m.r,m.col,m.lobes,m.ph,false);
+  if(m.k==="seek"){                     /* よってくる靄はしずくの尾を引く */
+    var gr2=g.createRadialGradient(m.x,m.y-m.r*.8,2,m.x,m.y-m.r*.8,m.r*.9);
+    gr2.addColorStop(0,m.col+"AA"); gr2.addColorStop(1,m.col+"00");
+    g.fillStyle=gr2; g.beginPath(); g.ellipse(m.x,m.y-m.r*.75,m.r*.42,m.r*.95,0,0,6.283); g.fill();
+  }
+  if(m.k==="dense"){                    /* おもい靄は芯が見える */
+    g.globalAlpha=.55; g.fillStyle="#1B1430";
+    g.beginPath(); g.arc(m.x,m.y,m.r*.34,0,6.283); g.fill(); g.globalAlpha=1;
+  }
+}
+function drawLuna(){
+  var blink=(L.inv>0)?(.35+Math.abs(Math.sin(t*16))*.55):1;   /* 絵は変えず明滅だけ */
+  var y=L.y+Math.sin(L.ph)*2;
+  g.save(); g.globalAlpha=blink;
+  var gl=g.createRadialGradient(L.x,y,2,L.x,y,52);
+  gl.addColorStop(0,"rgba(217,204,255,.55)");
+  gl.addColorStop(.45,"rgba(155,124,214,.28)");
+  gl.addColorStop(1,"rgba(155,124,214,0)");
+  g.fillStyle=gl; g.beginPath(); g.arc(L.x,y,52,0,6.283); g.fill();
+  /* 後ろにこぼれる白い尾の光 */
+  var tg=g.createRadialGradient(L.x,y+30,1,L.x,y+30,26);
+  tg.addColorStop(0,"rgba(255,255,255,.5)"); tg.addColorStop(1,"rgba(255,255,255,0)");
+  g.fillStyle=tg; g.beginPath(); g.ellipse(L.x,y+30,10,24,0,0,6.283); g.fill();
+
+  var S=60;
+  if(luna.ok){
+    g.drawImage(luna.img,L.x-S/2,y-S/2,S,S);
+  }else{
+    var b=g.createRadialGradient(L.x,y,2,L.x,y,20);
+    b.addColorStop(0,"#FFFFFF"); b.addColorStop(.45,"#D9CCFF"); b.addColorStop(1,"#9B7CD6");
+    g.fillStyle=b; g.beginPath(); g.arc(L.x,y,17,0,6.283); g.fill();
+    g.fillStyle="#B79BE8";                       /* 猫耳のシルエット */
+    [[-10,-13],[10,-13]].forEach(function(e){
+      g.beginPath(); g.moveTo(L.x+e[0]-7,y+e[1]+6); g.lineTo(L.x+e[0],y+e[1]-11);
+      g.lineTo(L.x+e[0]+7,y+e[1]+6); g.closePath(); g.fill();
+    });
+  }
+  g.restore();
+}
+function draw(){
+  drawSky();
+  for(var i=0;i<ring.length;i++){
+    var rr=ring[i]; g.globalAlpha=Math.max(0,rr.l)*.5;
+    g.strokeStyle="#D9CCFF"; g.lineWidth=1.4;
+    g.beginPath(); g.arc(rr.x,rr.y,rr.r,0,6.283); g.stroke();
+  }
+  g.globalAlpha=1;
+  if(big)drawBig();
+  for(var h=0;h<haze.length;h++)drawHaze(haze[h]);
+
+  for(var b=0;b<motes.length;b++){                 /* 水晶の光の粒 */
+    var mo=motes[b], a=.75+Math.sin(mo.ph)*.25;
+    var gr=g.createRadialGradient(mo.x,mo.y,0,mo.x,mo.y,9);
+    gr.addColorStop(0,"rgba(255,255,255,"+a+")");
+    gr.addColorStop(.4,"rgba(217,204,255,"+(a*.65)+")");
+    gr.addColorStop(1,"rgba(155,124,214,0)");
+    g.fillStyle=gr; g.beginPath(); g.arc(mo.x,mo.y,9,0,6.283); g.fill();
+  }
+  for(var p=0;p<spark.length;p++){
+    var s2=spark[p]; g.globalAlpha=Math.min(1,s2.l*.9); g.fillStyle=s2.c;
+    if(s2.star){                                  /* 金の星屑は小さな四芒星 */
+      var r3=s2.s*1.5;
+      g.beginPath();
+      g.moveTo(s2.x,s2.y-r3); g.quadraticCurveTo(s2.x,s2.y,s2.x+r3,s2.y);
+      g.quadraticCurveTo(s2.x,s2.y,s2.x,s2.y+r3);
+      g.quadraticCurveTo(s2.x,s2.y,s2.x-r3,s2.y);
+      g.quadraticCurveTo(s2.x,s2.y,s2.x,s2.y-r3);
+      g.fill();
+    }else{
+      g.beginPath(); g.arc(s2.x,s2.y,s2.s*.5,0,6.283); g.fill();
+    }
+  }
+  g.globalAlpha=1;
+  if(mode==="play")drawLuna();
+  drawHud();
+  if(shine>0){ g.fillStyle="rgba(217,204,255,"+(shine*.35)+")"; g.fillRect(0,0,W,H); }
+  if(odT>0){ g.fillStyle="rgba(120,80,200,.10)"; g.fillRect(0,0,W,H); }
+  if(paused&&mode==="play"){
+    g.fillStyle="rgba(11,7,24,.6)"; g.fillRect(0,0,W,H);
+    g.fillStyle="#D9CCFF"; g.textAlign="center"; g.font="16px system-ui,sans-serif";
+    g.fillText("すこし休みましょう",W/2,H/2); g.textAlign="left";
+  }
+}
+function drawHud(){
+  if(mode!=="play")return;
+  g.font="15px system-ui,sans-serif"; g.fillStyle="#D9CCFF";
+  g.fillText("浄めた数 "+score,14,30);
+  g.font="16px system-ui,sans-serif"; g.fillStyle="#E7B9D8";
+  g.fillText("こころ "+(hearts>0?"♡".repeat(hearts):"‥"),14,54);
+  if(msgT>0){
+    /* おおきな靄は画面の上から22%にいるので、言葉はそこを避けて下側に出す */
+    g.globalAlpha=Math.min(1,msgT*2); g.textAlign="center";
+    g.fillStyle="#D9CCFF"; g.font="16px system-ui,sans-serif";
+    g.fillText(msg,W/2,H*.62); g.textAlign="left"; g.globalAlpha=1;
+  }
+  /* しずけさのたまり具合を右下ボタンの縁に */
+  var cxp=W-44, cyp=H-44;
+  g.strokeStyle="rgba(217,204,255,.25)"; g.lineWidth=3;
+  g.beginPath(); g.arc(cxp,cyp,33,0,6.283); g.stroke();
+  g.strokeStyle=od>=100?"#FFFFFF":"#9B7CD6";
+  g.beginPath(); g.arc(cxp,cyp,33,-1.5708,-1.5708+6.283*(od/100)); g.stroke();
+  g.lineWidth=1;
+}
+
+/* ---------- 操作 ---------- */
+function start(){
+  aInit(); if(AC&&AC.state==="suspended")AC.resume();
+  reset(); mode="play"; paused=false;
+  vTitle.classList.remove("on"); vOver.classList.remove("on");
+  odBtn.classList.add("show");
+}
+document.getElementById("btnStart").addEventListener("click",start);
+document.getElementById("btnAgain").addEventListener("click",start);
+
+function hush(){
+  if(mode!=="play"||od<100||odT>0)return;
+  odT=5; od=0; odBtn.classList.remove("ready");
+  msg="しずけさ"; msgT=1.4; shine=Math.min(.5,shine+.25); sHush();
+}
+/* 指でもマウスでも押せるように。二重発火は時刻で抑える */
+var lastHush=0;
+function hushTap(e){
+  if(e)e.preventDefault();
+  var n=performance.now(); if(n-lastHush<350)return; lastHush=n;
+  aInit(); if(AC&&AC.state==="suspended")AC.resume();
+  hush();
+}
+odBtn.addEventListener("click",hushTap);
+odBtn.addEventListener("touchstart",hushTap,{passive:false});
+
+addEventListener("keydown",function(e){
+  if([" ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.key)>-1)e.preventDefault();
+  keys[e.key]=1; aInit(); if(AC&&AC.state==="suspended")AC.resume();
+  var k=e.key.toLowerCase();
+  if(mode!=="play"&&(e.key===" "||e.key==="Enter"))start();
+  if(mode==="play"&&(k==="x"||e.key==="Shift"))hush();
+});
+addEventListener("keyup",function(e){keys[e.key]=0;});
+
+/* 指: 画面のどこを触ってもよい。触れた位置との差でルナが動く */
+cv.addEventListener("pointerdown",function(e){
+  aInit(); if(AC&&AC.state==="suspended")AC.resume();
+  if(mode!=="play")return;
+  var r=cv.getBoundingClientRect();
+  pointer={id:e.pointerId,dx:L.x-(e.clientX-r.left),dy:L.y-(e.clientY-r.top)};
+  if(cv.setPointerCapture)try{cv.setPointerCapture(e.pointerId);}catch(err){}
+});
+cv.addEventListener("pointermove",function(e){
+  if(!pointer||e.pointerId!==pointer.id||mode!=="play")return;
+  var r=cv.getBoundingClientRect();
+  L.x=Math.max(22,Math.min(W-22,e.clientX-r.left+pointer.dx));
+  L.y=Math.max(H*.3,Math.min(H-22,e.clientY-r.top+pointer.dy));
+  e.preventDefault();
+},{passive:false});
+function endPointer(e){ if(pointer&&e.pointerId===pointer.id)pointer=null; }
+cv.addEventListener("pointerup",endPointer);
+cv.addEventListener("pointercancel",endPointer);
+
+/* 見えない間だけ休み、戻ったら続きから */
+function hide(){paused=true;keys={};pointer=null;if(AC&&AC.state==="running")AC.suspend();}
+function show(){paused=false;last=performance.now();if(AC)AC.resume();}
+document.addEventListener("visibilitychange",function(){document.hidden?hide():show();});
+addEventListener("blur",hide); addEventListener("focus",show);
+
+/* ---------- ループ ---------- */
+var last=performance.now();
+function frame(now){
+  try{
+    var dt=(now-last)/1000; last=now;
+    if(dt>.05)dt=.05;
+    if(!paused){
+      if(mode==="play")update(dt);
+      else{                                   /* タイトルと「また明日」の画面にも光を漂わせる */
+        if(Math.random()<dt*7)
+          spark.push({x:rnd(0,W),y:H*rnd(.55,1),vx:rnd(-.25,.25),vy:rnd(-.5,-.15),
+            l:rnd(1.6,3.2),m:.995,c:Math.random()<.25?"#FFE9A8":"#D9CCFF",
+            s:rnd(1.2,2.6),star:Math.random()<.2});
+        for(var sp2=spark.length-1;sp2>=0;sp2--){
+          var s3=spark[sp2]; s3.x+=s3.vx; s3.y+=s3.vy; s3.vy=s3.vy*s3.m-.004;
+          s3.l-=dt*.5; if(s3.l<=0)spark.splice(sp2,1);
+        }
+        for(var rg2=ring.length-1;rg2>=0;rg2--){
+          var rr2=ring[rg2]; rr2.r+=(rr2.max-rr2.r)*.09+.6; rr2.l-=dt*1.1;
+          if(rr2.l<=0)ring.splice(rg2,1);
+        }
+      }
+      var sf=(odT>0?.35:1)*(mode==="play"?1:.5);
+      for(var i=0;i<stars.length;i++){
+        var s=stars[i]; s.y+=(s.z*.55*dt*sf)/H*60;
+        s.tw+=dt*1.3; if(s.y>1.02){s.y=-.02;s.x=Math.random();}
+      }
+    }
+    draw();
+  }catch(err){ if(window.console)console.error(err); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
+

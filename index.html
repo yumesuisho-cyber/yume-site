@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>水晶ゆめ｜繊細さんの心を守る言葉</title>
+<meta name="description" content="当てない占いと、夜に灯る物語。占い・セルフケア・推し活・AIアートを届けています。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="水晶ゆめ｜繊細さんの心を守る言葉">
+<meta property="og:description" content="当てない占いと、夜に灯る物語。占い・セルフケア・推し活・AIアートを届けています。">
+<meta property="og:image" content="illust/ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="水晶ゆめ｜繊細さんの心を守る言葉">
+<meta name="twitter:description" content="当てない占いと、夜に灯る物語。占い・セルフケア・推し活・AIアートを届けています。">
+<meta name="twitter:image" content="illust/ogp.png">
+<link rel="icon" href="illust/favicon.png">
+<style>
+:root{
+  --bg:#FFFFFF; --bg2:#FAF9FC; --ink:#3A3550; --ink-soft:#6E687F;
+  --purple:#6B4FA0; --gold:#C9A227;
+  --line:rgba(107,79,160,.16); --card:#FFFFFF;
+  --shadow:0 10px 40px rgba(58,53,80,.06);
+  --mark:rgba(155,124,214,.28); --hero-ink:#3A2E5C; --veil:rgba(255,255,255,.5);
+  --serif:"Yu Mincho","YuMincho","Hiragino Mincho ProN","HGS明朝E","MS PMincho",serif;
+  --sans:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#1A1726; --bg2:#221E32; --ink:#E8E4F0; --ink-soft:#A9A2C0;
+  --line:rgba(200,180,255,.18); --card:#232032;
+  --shadow:0 10px 40px rgba(0,0,0,.35);
+  --mark:rgba(168,140,230,.42); --hero-ink:#E8E4F0; --veil:rgba(26,23,38,.55);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:18px;line-height:1.9;letter-spacing:.02em;
+  -webkit-text-size-adjust:100%;
+}
+img{max-width:100%;display:block}
+a{color:var(--purple)}
+.wrap{width:min(860px,92vw);margin:0 auto}
+
+/* ---------- ヘッダー（検索・テーマ） ---------- */
+header.bar{
+  position:sticky;top:0;z-index:50;
+  background:var(--bg);
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+}
+.bar-in{width:min(860px,92vw);margin:0 auto;display:flex;align-items:center;gap:12px;
+  padding:12px 0;flex-wrap:wrap}
+.brand{font-family:var(--serif);font-size:19px;letter-spacing:.08em;white-space:nowrap;
+  text-decoration:none;color:var(--ink)}
+.search{flex:1 1 200px;min-width:150px;position:relative}
+.search input{
+  width:100%;font:inherit;font-size:16px;padding:10px 14px;border-radius:16px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink);
+}
+.search input:focus{outline:2px solid var(--purple);outline-offset:1px}
+#count{font-size:13px;color:var(--purple);min-height:1.2em;padding:0 0 8px;
+  width:min(860px,92vw);margin:-4px auto 0}
+#count:empty{display:none}
+.tbtn{
+  flex:0 0 auto;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:19px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink);line-height:1;
+}
+.tbtn:hover{border-color:var(--purple)}
+
+/* ---------- ヒーロー ---------- */
+.hero{position:relative;overflow:hidden;isolation:isolate;
+  display:flex;align-items:center;min-height:clamp(460px,48vw,660px)}
+.hero-img{
+  position:absolute;inset:0;z-index:-2;
+  /* 顔は画像の縦10〜35%にある。縦は上端基準にして、どの幅でも顔が切れないようにする */
+  width:100%;height:100%;object-fit:cover;object-position:66% top;
+}
+.hero-fallback{
+  position:absolute;inset:0;z-index:-3;
+  background:
+    radial-gradient(80% 120% at 20% 20%,#FFFFFF 0%,#F6F1FF 45%,#EDE6F8 100%);
+}
+html[data-theme="dark"] .hero-fallback{
+  background:radial-gradient(80% 120% at 20% 20%,#2A2440 0%,#211C33 55%,#1A1726 100%);
+}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:transparent}
+html[data-theme="dark"] .hero::after{background:rgba(26,23,38,.55)}
+.hero-inner{
+  width:min(860px,92vw);margin:0 auto;padding:96px 0;text-align:center;
+}
+.hero-box{
+  display:inline-block;padding:34px 30px;border-radius:20px;text-align:center;
+  background:var(--veil);backdrop-filter:blur(2px);
+}
+/* PC幅では枠を左に寄せ、右側にゆめとルナが見えるようにする。
+   これより狭いと横が足りず2人に重なるので、その場合は中央のまま */
+@media (min-width:1100px){
+  .hero-inner{width:min(1180px,92vw);text-align:left}
+  .hero-box{max-width:min(480px,42vw)}
+  .hero-img{object-position:58% top}   /* 2人を右へ寄せて枠から離す */
+}
+.rule{width:120px;height:1px;margin:0 auto;background:
+  linear-gradient(90deg,transparent,var(--gold),transparent)}
+.hero h1{
+  font-family:var(--serif);color:var(--hero-ink);
+  font-size:clamp(32px,6.4vw,52px);line-height:1.55;margin:22px 0;
+  letter-spacing:.09em;font-weight:500;
+}
+.hero .role{font-family:var(--serif);color:var(--hero-ink);font-size:clamp(16px,3.2vw,21px);
+  margin:20px 0 10px;letter-spacing:.05em}
+.hero .acts{color:var(--hero-ink);opacity:.85;font-size:clamp(12px,2.6vw,14px);
+  letter-spacing:.22em;margin:0}
+.nb{white-space:nowrap}   /* 言葉の途中で割れないようにする */
+
+/* ---------- セクション ---------- */
+.section{padding:96px 0}
+.section+.section{border-top:1px solid var(--line)}
+.section.alt{background:var(--bg2)}
+h2{
+  font-family:var(--serif);font-weight:500;font-size:clamp(24px,4.6vw,32px);
+  letter-spacing:.08em;margin:0 0 8px;line-height:1.6;
+}
+.lead{color:var(--ink-soft);font-size:15px;letter-spacing:.14em;margin:0 0 40px}
+p{margin:0 0 1.6em}
+blockquote{margin:0 0 1.6em;padding:0 0 0 20px;border-left:2px solid var(--gold);
+  color:var(--ink)}
+
+/* イラスト枠 */
+.frame{
+  border-radius:16px;overflow:hidden;background:linear-gradient(135deg,#F3EEFC,#E9E2F6);
+  box-shadow:var(--shadow);margin:0 0 36px;min-height:120px;
+  display:flex;align-items:center;justify-content:center;
+}
+html[data-theme="dark"] .frame{background:linear-gradient(135deg,#2A2440,#221E32)}
+.frame img{width:100%;height:auto}
+.frame.portrait{max-width:420px;margin-left:auto;margin-right:auto}
+/* 「私について」はPCで左右に並べ、上下は中央で揃える */
+.about-grid{display:grid;gap:44px;align-items:center}
+.about-text p:last-child{margin-bottom:0}
+@media (min-width:901px){
+  .about-grid{grid-template-columns:380px 1fr}
+  .about-grid .frame{max-width:380px;margin-bottom:0}
+}
+/* 横長イラストは高さを抑え、中央を切り出す（本文が下に押し出されないように） */
+.frame.capped img{height:360px;object-fit:cover;object-position:center 42%}
+.frame .ph{color:var(--ink-soft);font-size:14px;letter-spacing:.1em;padding:56px 20px;text-align:center}
+
+/* カードの正方形サムネイル */
+.card.media{padding:0;overflow:hidden}
+.card.media .cbody{padding:20px 18px 24px}
+.cards.four h3{font-size:17px;line-height:1.6}
+.cards.four .cbody p{font-size:15px;line-height:1.8}
+.thumb{
+  aspect-ratio:1/1;background:linear-gradient(135deg,#F3EEFC,#E9E2F6);
+  border-bottom:1px solid var(--line);
+}
+html[data-theme="dark"] .thumb{background:linear-gradient(135deg,#2A2440,#221E32)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* カード */
+.cards{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.cards.four{grid-template-columns:repeat(4,1fr);gap:16px}   /* PCでは4枚を必ず1行に */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:28px 24px;box-shadow:var(--shadow);
+}
+.card .ico{font-size:26px;line-height:1;margin:0 0 12px}
+.card h3{font-family:var(--serif);font-size:19px;font-weight:500;margin:0 0 8px;letter-spacing:.04em}
+.card p{margin:0;font-size:16px;color:var(--ink-soft);line-height:1.85}
+a.card{text-decoration:none;color:inherit;display:block;transition:transform .35s ease,border-color .35s ease}
+a.card:hover{transform:translateY(-3px);border-color:var(--purple)}
+a.card .meta{display:inline-block;margin-top:14px;font-size:13px;color:var(--purple);letter-spacing:.08em}
+.tag{display:inline-block;font-size:12px;color:var(--gold);border:1px solid var(--gold);
+  border-radius:999px;padding:1px 10px;margin-left:8px;letter-spacing:.08em;vertical-align:middle}
+
+/* リスト */
+ul.soft{list-style:none;padding:0;margin:0 0 2em}
+ul.soft li{position:relative;padding:0 0 0 24px;margin:0 0 .9em}
+ul.soft li::before{content:"";position:absolute;left:4px;top:.85em;width:6px;height:6px;
+  border-radius:50%;background:var(--gold)}
+h3.sub{font-family:var(--serif);font-weight:500;font-size:20px;letter-spacing:.06em;
+  margin:48px 0 16px}
+
+/* FAQ */
+.faq{border-top:1px solid var(--line)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-q{
+  width:100%;text-align:left;background:none;border:0;cursor:pointer;color:var(--ink);
+  font:inherit;font-size:17px;padding:24px 40px 24px 0;position:relative;line-height:1.7;
+}
+.faq-q::after{
+  content:"＋";position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  color:var(--purple);font-size:18px;transition:transform .3s ease;
+}
+.faq-item.open .faq-q::after{content:"−"}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s ease}
+.faq-item.open .faq-a{grid-template-rows:1fr}
+.faq-a>div{overflow:hidden}
+.faq-a p{margin:0;padding:0 0 26px;color:var(--ink-soft);font-size:16.5px}
+
+/* フォーム */
+form{display:grid;gap:20px;max-width:600px}
+label{display:block;font-size:15px;letter-spacing:.06em;margin:0 0 8px;color:var(--ink-soft)}
+input[type=text],input[type=email],textarea{
+  width:100%;font:inherit;font-size:17px;padding:14px 16px;border-radius:16px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink);line-height:1.7;
+}
+input:focus,textarea:focus{outline:2px solid var(--purple);outline-offset:1px}
+textarea{min-height:150px;resize:vertical}
+button.send{
+  justify-self:start;font:inherit;font-size:17px;letter-spacing:.1em;cursor:pointer;
+  padding:14px 40px;border-radius:999px;border:1px solid var(--purple);
+  background:var(--purple);color:#fff;transition:opacity .3s ease;
+}
+button.send:hover{opacity:.86}
+.thanks{color:var(--purple);font-size:16px;margin:0}
+.thanks:empty{display:none}
+
+/* フッター */
+footer{padding:64px 0 80px;text-align:center;border-top:1px solid var(--line);
+  color:var(--ink-soft);font-size:15px}
+footer a{display:inline-block;margin-bottom:24px;color:var(--purple);text-decoration:none;
+  letter-spacing:.1em;border-bottom:1px solid var(--line);padding-bottom:4px}
+
+/* 検索 */
+mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
+.section.dim{opacity:.28;transition:opacity .35s ease}
+
+/* スクロール表示 */
+.section,.hero-box{opacity:0;transform:translateY(18px);
+  transition:opacity .9s ease,transform .9s ease}
+.section.on,.hero-box.on{opacity:1;transform:none}
+.section.on .card{opacity:1;transform:none}
+.card{opacity:0;transform:translateY(12px);
+  transition:opacity .7s ease,transform .7s ease;
+  transition-delay:calc(var(--i,0)*90ms)}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .section,.hero-box,.card{opacity:1!important;transform:none!important;transition:none!important}
+  .faq-a{transition:none}
+  a.card:hover{transform:none}
+}
+@media (max-width:900px){
+  .cards.four{grid-template-columns:repeat(2,1fr)}   /* タブレット幅も2列×2段 */
+}
+@media (max-width:640px){
+  body{font-size:18px}
+  .bar-in{padding:10px 0;gap:8px}
+  .search{flex:1 1 100%;order:3}
+  .search input{font-size:16px;padding:9px 14px}
+  .hero-img{object-position:68% top}
+  .hero-inner{padding:76px 0 84px}
+  .hero-box{padding:26px 18px}
+  .brand{font-size:17px;margin-right:auto}
+  .section{padding:96px 0}
+  .card{padding:24px 20px}
+  .cards.four{grid-template-columns:repeat(2,1fr);gap:12px}   /* スマホは2列×2段 */
+  .card.media .cbody{padding:14px 12px 18px}
+  .cards.four h3{font-size:15.5px;letter-spacing:0;line-height:1.55}
+  .cards.four .cbody p{font-size:13.5px;line-height:1.75}
+  .frame.capped img{height:220px}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="#top">水晶ゆめ</a>
+    <div class="search">
+      <input id="q" type="search" placeholder="サイト内を検索" aria-label="サイト内を検索"
+             autocomplete="off">
+    </div>
+    <button class="tbtn" id="theme" type="button" aria-label="ダークモードを切り替える"
+            title="ダークモードを切り替える">🌙</button>
+  </div>
+  <p id="count" role="status" aria-live="polite"></p>
+</header>
+
+<!-- ① ヒーロー -->
+<section class="hero" id="top">
+  <div class="hero-fallback"></div>
+  <img class="hero-img" src="illust/hero.png" width="1672" height="941"
+       alt="水晶ゆめとルナが並んでいるイラスト" decoding="async" fetchpriority="high">
+  <div class="hero-inner">
+    <div class="hero-box sbody">
+      <div class="rule"></div>
+      <h1><span class="nb">繊細さんの</span><br><span class="nb">心を守る言葉</span></h1>
+      <div class="rule"></div>
+      <p class="role"><span class="nb">水晶ゆめ🔮</span><br><span class="nb">当てない占い師×夢を灯す創作家</span></p>
+      <p class="acts"><span class="nb">占い ×</span> <span class="nb">セルフケア ×</span>
+        <span class="nb">推し活 ×</span> <span class="nb">AIアート ×</span> <span class="nb">短編小説</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ② 私について -->
+<section class="section" id="about">
+  <div class="wrap sbody">
+    <h2>私について</h2>
+    <p class="lead">ABOUT</p>
+    <div class="about-grid">
+    <div class="frame portrait">
+      <img src="illust/about.png" width="1086" height="1448"
+           alt="水晶ゆめのイラスト" loading="lazy" decoding="async">
+    </div>
+    <div class="about-text">
+    <p>
+      毎朝、オラクルカードを1枚引いています。<br>
+      未来を当てることは、していません。
+    </p>
+    <p>
+      私自身、副業の遠回りを重ねて、<br>
+      発信で信頼を失ったこともありました。
+    </p>
+    <p>
+      そんな夜を支えてくれたのが、<br>
+      布団の中で引いた一枚のカードと、<br>
+      推しの配信でした。
+    </p>
+    <p>
+      占いは、当てるものではなく、<br>
+      今日を少し軽くするための習慣だった。<br>
+      そう気づいてから、書くものが変わりました。
+    </p>
+    <p>
+      当てる占いはしません。<br>
+      代わりに、あなたが自分を責めずに休める<span class="nb">場所を作っています🌙</span>
+    </p>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- ③ 届けているもの -->
+<section class="section alt" id="works">
+  <div class="wrap sbody">
+    <h2>届けているもの</h2>
+    <p class="lead">WHAT I MAKE</p>
+    <div class="cards four">
+      <div class="card media" style="--i:0">
+        <div class="thumb">
+          <img src="illust/card-1.png" width="1254" height="1254"
+               alt="朝活オラクルカードのイラスト" loading="lazy" decoding="async">
+        </div>
+        <div class="cbody">
+          <h3>朝活オラクルカード</h3>
+          <p>毎朝1枚、今日の心を整える言葉を届けています</p>
+        </div>
+      </div>
+      <div class="card media" style="--i:1">
+        <div class="thumb">
+          <img src="illust/card-2.png" width="1254" height="1254"
+               alt="占いとセルフケアのイラスト" loading="lazy" decoding="async">
+        </div>
+        <div class="cbody">
+          <h3>占い×セルフケア</h3>
+          <p>タロット・数秘・星から、自分をいたわる方法を</p>
+        </div>
+      </div>
+      <div class="card media" style="--i:2">
+        <div class="thumb">
+          <img src="illust/card-3.png" width="1254" height="1254"
+               alt="推し活と心の守り方のイラスト" loading="lazy" decoding="async">
+        </div>
+        <div class="cbody">
+          <h3>推し活と心の守り方</h3>
+          <p>好きでいることが、しんどくならないために</p>
+        </div>
+      </div>
+      <div class="card media" style="--i:3">
+        <div class="thumb">
+          <img src="illust/card-4.png" width="1254" height="1254"
+               alt="AIアートと物語のイラスト" loading="lazy" decoding="async">
+        </div>
+        <div class="cbody">
+          <h3>AIアートと物語</h3>
+          <p>光と色で感情を描き、短編で世界を広げます</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ④ 発信している場所 -->
+<section class="section" id="links">
+  <div class="wrap sbody">
+    <h2>発信している場所</h2>
+    <p class="lead">WHERE I AM</p>
+    <div class="cards">
+      <a class="card" href="https://note.com/yume_suisho"
+         target="_blank" rel="noopener noreferrer" style="--i:0">
+        <h3>note<span class="tag">メイン</span></h3>
+        <p>記事はすべてここに</p>
+        <span class="meta">ひらく →</span>
+      </a>
+      <a class="card" href="https://www.threads.com/@yume_suisho0"
+         target="_blank" rel="noopener noreferrer" style="--i:1">
+        <h3>スレッズ<span class="tag">作品を見るなら</span></h3>
+        <p>AIイラストを毎日投稿</p>
+        <span class="meta">ひらく →</span>
+      </a>
+      <a class="card" href="https://x.com/yume_suisho"
+         target="_blank" rel="noopener noreferrer" style="--i:2">
+        <h3>X</h3>
+        <p>発信を少しずつ</p>
+        <span class="meta">ひらく →</span>
+      </a>
+      <a class="card" href="https://note.com/yume_suisho/membership"
+         target="_blank" rel="noopener noreferrer" style="--i:3">
+        <h3>noteメンバーシップ</h3>
+        <p>没イラストと、有料記事の無料開放</p>
+        <span class="meta">ひらく →</span>
+      </a>
+      <a class="card" href="https://www.patreon.com/c/yume_suisho/posts"
+         target="_blank" rel="noopener noreferrer" style="--i:4">
+        <h3>Patreon</h3>
+        <p>海外向け・イラスト専門（英日バイリンガル）</p>
+        <span class="meta">ひらく →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ お仕事のご依頼 -->
+<section class="section alt" id="work">
+  <div class="wrap sbody">
+    <h2>お仕事のご依頼</h2>
+    <p class="lead">WORK WITH ME</p>
+    <div class="frame capped">
+      <img src="illust/work.png" width="1672" height="941"
+           alt="水晶ゆめとルナが案内するイラスト" loading="lazy" decoding="async">
+    </div>
+
+    <h3 class="sub">これまでの活動</h3>
+    <ul class="soft">
+      <li>Pollo AIさまのnote連載「ゆめとルナがゆく タロットの世界」を継続制作中（企画・物語・記事執筆・アニメ動画制作を担当）</li>
+      <li>note記事800本以上（2026年8月時点）</li>
+      <li>フォロワー: note 5,369名／X 2,783名／スレッズ 4,118名（2026年8月時点）</li>
+      <li>スレッズでAIイラストを毎日投稿</li>
+      <li>海外向けにPatreonで英日バイリンガル運営</li>
+    </ul>
+
+    <h3 class="sub">お受けできること</h3>
+    <ul class="soft">
+      <li>AIアート×物語の連載企画・制作（キャラクター設定から物語・イラスト・動画・記事まで一貫して）</li>
+      <li>AIツールの実践レビュー・メイキング記事</li>
+      <li>記事用イラスト・挿絵の制作</li>
+    </ul>
+
+    <h3 class="sub">私の強み</h3>
+    <blockquote>
+      AIアートが描けるライターは増えましたが、<br>
+      私の持ち味は「掛け算」だと思っています。
+    </blockquote>
+    <ul class="soft">
+      <li>占い×セルフケアの発信を毎日続けてきた語り口</li>
+      <li>HSP気質の当事者として、繊細な読者に寄り添う視点</li>
+      <li>推し活・VTuber文化への理解</li>
+      <li>物語とイラストと文章を、ひとりで完結できること</li>
+    </ul>
+
+    <blockquote>
+      にぎやかに煽るのではなく、静かに信頼を積む発信が<br>
+      お役に立てそうでしたら、ぜひご相談ください🌙
+    </blockquote>
+  </div>
+</section>
+
+<!-- ⑥ よくある質問 -->
+<section class="section" id="faq">
+  <div class="wrap sbody">
+    <h2>よくある質問</h2>
+    <p class="lead">FAQ</p>
+    <div class="faq">
+      <div class="faq-item">
+        <button class="faq-q" type="button">鑑定はしていますか？</button>
+        <div class="faq-a"><div><p>個人鑑定は行っていません。記事を通して、心を整えるヒントをお届けしています。</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" type="button">占いは当たりますか？</button>
+        <div class="faq-a"><div><p>当てることを目的にしていません。今日を少し楽にするための習慣として使っていただけたら嬉しいです。</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" type="button">イラストはどうやって作っていますか？</button>
+        <div class="faq-a"><div><p>生成AIを使っています。使ったツールは記事の中で必ずお伝えしています。</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" type="button">お仕事の相談は初めてでも大丈夫ですか？</button>
+        <div class="faq-a"><div><p>はい。やりたいことが固まっていない段階でも、一緒に形にするところからお手伝いできます。</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ お問い合わせ -->
+<section class="section alt" id="contact">
+  <div class="wrap sbody">
+    <h2>お問い合わせ</h2>
+    <p class="lead">CONTACT</p>
+    <p>お話をうかがうところから、ゆっくりで大丈夫です。よろしければ、こちらからお声がけください💫</p>
+    <form id="cform" novalidate>
+      <div>
+        <label for="n">お名前</label>
+        <input id="n" name="n" type="text" placeholder="水晶 ゆめ">
+      </div>
+      <div>
+        <label for="m">メールアドレス</label>
+        <input id="m" name="m" type="email" placeholder="you@example.com">
+      </div>
+      <div>
+        <label for="b">ご相談内容</label>
+        <textarea id="b" name="b" placeholder="まだ固まっていない段階でも構いません。思っていることをそのまま書いてみてください。"></textarea>
+      </div>
+      <button class="send" type="submit">送信する</button>
+      <p class="thanks" id="thanks"></p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a href="#top">↑ 上に戻る</a>
+    <p style="margin:0">© 水晶ゆめ</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+
+  /* ---------- ダークモード（localStorage が使えない環境でも落とさない） ---------- */
+  var KEY="yume-theme";
+  function ls(k,v){try{return v===undefined?localStorage.getItem(k):localStorage.setItem(k,v);}
+    catch(e){return null;}}
+  var btn=document.getElementById("theme");
+  function apply(t){
+    root.setAttribute("data-theme",t);
+    btn.textContent=(t==="dark")?"☀️":"🌙";
+    btn.setAttribute("aria-pressed",t==="dark");
+  }
+  /* 初回は必ずライト（白ベース）。端末のダーク設定は初期表示に使わない。
+     ダークになるのは右上のトグルを押したときだけで、その選択だけを次回に引き継ぐ */
+  var saved=ls(KEY);
+  apply(saved==="dark"?"dark":"light");
+  btn.addEventListener("click",function(){
+    var t=(root.getAttribute("data-theme")==="dark")?"light":"dark";
+    apply(t); ls(KEY,t);
+  });
+
+  /* ---------- スクロールでふわっと ---------- */
+  var targets=[].slice.call(document.querySelectorAll(".section,.hero-box"));
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if(!("IntersectionObserver" in window)||reduce){
+    targets.forEach(function(el){el.classList.add("on");});
+  }else{
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){e.target.classList.add("on");io.unobserve(e.target);} });
+    },{rootMargin:"0px 0px -8% 0px",threshold:.08});
+    targets.forEach(function(el){io.observe(el);});
+    setTimeout(function(){ // 念のための保険（何かで発火しなくても必ず読める）
+      targets.forEach(function(el){el.classList.add("on");});
+    },2500);
+  }
+
+  /* ---------- 画像が無くても崩れないように ---------- */
+  [].slice.call(document.querySelectorAll(".frame img,.thumb img,.hero-img")).forEach(function(img){
+    function fallback(){
+      if(img.dataset.done)return; img.dataset.done="1";
+      img.style.display="none";                       // 下地のグラデーションだけが残る
+      if(img.parentNode.classList.contains("frame")){
+        var p=document.createElement("p");
+        p.className="ph"; p.textContent="イラスト準備中";
+        img.parentNode.appendChild(p);
+      }
+    }
+    // error のときだけ差し替える（loading="lazy" はまだ読み込んでいないだけなので判定しない）
+    img.addEventListener("error",fallback);
+    if(img.complete&&img.naturalWidth===0)fallback();
+  });
+
+  /* 検索で中身を戻すため、イベントを付ける前の状態を先に保存しておく
+     （後で保存すると data-b 付きのHTMLが焼き付き、戻したあと再バインドできなくなる） */
+  var bodies=[].slice.call(document.querySelectorAll(".sbody"));
+  bodies.forEach(function(b){ b.dataset.src=b.innerHTML; });
+
+  /* ---------- FAQ・フォーム（検索で中身を戻したあとも効くように毎回バインド） ---------- */
+  function bindAll(){
+    [].slice.call(document.querySelectorAll(".faq-q")).forEach(function(q){
+      if(q.dataset.b)return; q.dataset.b="1";
+      q.setAttribute("aria-expanded","false");
+      q.addEventListener("click",function(){
+        var it=q.parentNode, open=it.classList.toggle("open");
+        q.setAttribute("aria-expanded",open?"true":"false");
+      });
+    });
+    var f=document.getElementById("cform");
+    if(f&&!f.dataset.b){
+      f.dataset.b="1";
+      f.addEventListener("submit",function(e){
+        e.preventDefault();                    // 送信先は設定していません
+        document.getElementById("thanks").textContent="ありがとうございます🌙 内容を受け取りました。";
+      });
+    }
+  }
+  bindAll();
+
+  /* ---------- サイト内検索 ---------- */
+  var input=document.getElementById("q"), count=document.getElementById("count"), timer=null;
+
+  function restore(){
+    bodies.forEach(function(b){ if(b.innerHTML!==b.dataset.src)b.innerHTML=b.dataset.src; });
+    [].slice.call(document.querySelectorAll(".section")).forEach(function(s){s.classList.remove("dim");});
+    bindAll();
+  }
+  function markIn(node,needle){
+    var n=0, walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT,{
+      acceptNode:function(t){
+        var p=t.parentNode;
+        if(!p||/^(SCRIPT|STYLE|MARK|TEXTAREA|INPUT)$/.test(p.nodeName))return NodeFilter.FILTER_REJECT;
+        return t.nodeValue.toLowerCase().indexOf(needle)>-1?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+      }
+    }),hits=[],t;
+    while((t=walker.nextNode()))hits.push(t);
+    hits.forEach(function(tn){
+      var text=tn.nodeValue, low=text.toLowerCase(), frag=document.createDocumentFragment(), i=0, p;
+      while((p=low.indexOf(needle,i))>-1){
+        if(p>i)frag.appendChild(document.createTextNode(text.slice(i,p)));
+        var mk=document.createElement("mark");
+        mk.className="hit"; mk.textContent=text.substr(p,needle.length);
+        frag.appendChild(mk); i=p+needle.length; n++;
+      }
+      if(i<text.length)frag.appendChild(document.createTextNode(text.slice(i)));
+      tn.parentNode.replaceChild(frag,tn);
+    });
+    return n;
+  }
+  function run(){
+    var q=input.value.trim().toLowerCase();
+    restore();
+    if(!q){count.textContent="";return;}
+    var total=0;
+    bodies.forEach(function(b){
+      var n=markIn(b,q);
+      total+=n;
+      var sec=b.closest(".section");
+      if(sec)sec.classList.toggle("dim",n===0);
+      if(n>0){ // ヒットしたFAQは自動で開く
+        [].slice.call(b.querySelectorAll(".faq-item")).forEach(function(it){
+          if(it.querySelector("mark.hit"))it.classList.add("open");
+        });
+      }
+    });
+    bindAll();
+    count.textContent=total>0?(total+"件見つかりました"):"見つかりませんでした";
+  }
+  input.addEventListener("input",function(){clearTimeout(timer);timer=setTimeout(run,160);});
+  input.addEventListener("search",run);
+})();
+</script>
+</body>
+</html>
