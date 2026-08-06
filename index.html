@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -6,13 +6,16 @@
 <title>水晶ゆめ｜繊細さんの心を守る言葉</title>
 <meta name="description" content="当てない占いと、夜に灯る物語。占い・セルフケア・推し活・AIアートを届けています。">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://yumesuisho-cyber.github.io/yume-site/">
 <meta property="og:title" content="水晶ゆめ｜繊細さんの心を守る言葉">
 <meta property="og:description" content="当てない占いと、夜に灯る物語。占い・セルフケア・推し活・AIアートを届けています。">
-<meta property="og:image" content="illust/ogp.png">
+<meta property="og:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/ogp.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="水晶ゆめ｜繊細さんの心を守る言葉">
 <meta name="twitter:description" content="当てない占いと、夜に灯る物語。占い・セルフケア・推し活・AIアートを届けています。">
-<meta name="twitter:image" content="illust/ogp.png">
+<meta name="twitter:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/ogp.jpg">
 <link rel="icon" href="illust/favicon.png">
 <style>
 :root{
@@ -173,6 +176,30 @@ a.card .meta{display:inline-block;margin-top:14px;font-size:13px;color:var(--pur
 .tag{display:inline-block;font-size:12px;color:var(--gold);border:1px solid var(--gold);
   border-radius:999px;padding:1px 10px;margin-left:8px;letter-spacing:.08em;vertical-align:middle}
 
+/* よるのあそびば（主役にならないよう、カードより一回り小さく静かに） */
+.playcard{
+  display:flex;align-items:center;gap:18px;max-width:460px;padding:14px;
+  border:1px solid var(--line);border-radius:14px;background:var(--card);
+  box-shadow:0 6px 20px rgba(58,53,80,.04);text-decoration:none;color:inherit;
+  transition:transform .35s ease,border-color .35s ease;
+}
+.playcard:hover{transform:translateY(-2px);border-color:var(--purple)}
+.playthumb{flex:0 0 104px;width:104px;height:104px;border-radius:10px;overflow:hidden;
+  background:linear-gradient(135deg,#F3EEFC,#E9E2F6);display:block}
+html[data-theme="dark"] .playthumb{background:linear-gradient(135deg,#2A2440,#221E32)}
+.playthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.playbody{display:block;min-width:0}
+.playttl{display:block;font-family:var(--serif);font-size:17px;letter-spacing:.06em;margin:0 0 2px}
+.playsub{display:block;font-size:13.5px;color:var(--ink-soft);line-height:1.75}
+.playbtn{display:inline-block;margin-top:10px;font-size:12.5px;letter-spacing:.08em;
+  color:var(--purple);border:1px solid var(--line);border-radius:999px;padding:5px 16px}
+.playcard:hover .playbtn{border-color:var(--purple)}
+html[data-theme="dark"] .playbtn{color:#C3AEEA}   /* 夜は紫が沈むので淡く */
+@media (max-width:420px){
+  .playthumb{flex:0 0 84px;width:84px;height:84px}
+  .playcard{gap:14px;padding:12px}
+}
+
 /* リスト */
 ul.soft{list-style:none;padding:0;margin:0 0 2em}
 ul.soft li{position:relative;padding:0 0 0 24px;margin:0 0 .9em}
@@ -215,12 +242,21 @@ button.send{
 button.send:hover{opacity:.86}
 .thanks{color:var(--purple);font-size:16px;margin:0}
 .thanks:empty{display:none}
+.thanks.warn{color:#8A6E12}                       /* 赤は使わず、落ち着いた金で */
+html[data-theme="dark"] .thanks.warn{color:#E5C766}
+.mailto{margin:18px 0 0;font-size:14px;color:var(--ink-soft)}
+.mailto a{color:var(--purple);text-decoration:none;border-bottom:1px solid var(--line)}
+html[data-theme="dark"] .mailto a{color:#C3AEEA}
 
 /* フッター */
 footer{padding:64px 0 80px;text-align:center;border-top:1px solid var(--line);
   color:var(--ink-soft);font-size:15px}
 footer a{display:inline-block;margin-bottom:24px;color:var(--purple);text-decoration:none;
   letter-spacing:.1em;border-bottom:1px solid var(--line);padding-bottom:4px}
+footer .labs{margin:14px 0 0}
+footer .labs a{margin:0;font-size:11.5px;letter-spacing:.24em;color:var(--ink-soft);
+  border-bottom:0;opacity:.55;padding:0}
+footer .labs a:hover{opacity:1;color:var(--purple)}
 
 /* 検索 */
 mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
@@ -281,7 +317,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
 <!-- ① ヒーロー -->
 <section class="hero" id="top">
   <div class="hero-fallback"></div>
-  <img class="hero-img" src="illust/hero.png" width="1672" height="941"
+  <img class="hero-img" src="illust/hero.jpg" width="1600" height="900"
        alt="水晶ゆめとルナが並んでいるイラスト" decoding="async" fetchpriority="high">
   <div class="hero-inner">
     <div class="hero-box sbody">
@@ -302,7 +338,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
     <p class="lead">ABOUT</p>
     <div class="about-grid">
     <div class="frame portrait">
-      <img src="illust/about.png" width="1086" height="1448"
+      <img src="illust/about.jpg" width="840" height="1120"
            alt="水晶ゆめのイラスト" loading="lazy" decoding="async">
     </div>
     <div class="about-text">
@@ -341,7 +377,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
     <div class="cards four">
       <div class="card media" style="--i:0">
         <div class="thumb">
-          <img src="illust/card-1.png" width="1254" height="1254"
+          <img src="illust/card-1.jpg" width="700" height="700"
                alt="朝活オラクルカードのイラスト" loading="lazy" decoding="async">
         </div>
         <div class="cbody">
@@ -351,7 +387,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
       </div>
       <div class="card media" style="--i:1">
         <div class="thumb">
-          <img src="illust/card-2.png" width="1254" height="1254"
+          <img src="illust/card-2.jpg" width="700" height="700"
                alt="占いとセルフケアのイラスト" loading="lazy" decoding="async">
         </div>
         <div class="cbody">
@@ -361,7 +397,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
       </div>
       <div class="card media" style="--i:2">
         <div class="thumb">
-          <img src="illust/card-3.png" width="1254" height="1254"
+          <img src="illust/card-3.jpg" width="700" height="700"
                alt="推し活と心の守り方のイラスト" loading="lazy" decoding="async">
         </div>
         <div class="cbody">
@@ -371,7 +407,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
       </div>
       <div class="card media" style="--i:3">
         <div class="thumb">
-          <img src="illust/card-4.png" width="1254" height="1254"
+          <img src="illust/card-4.jpg" width="700" height="700"
                alt="AIアートと物語のイラスト" loading="lazy" decoding="async">
         </div>
         <div class="cbody">
@@ -429,7 +465,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
     <h2>お仕事のご依頼</h2>
     <p class="lead">WORK WITH ME</p>
     <div class="frame capped">
-      <img src="illust/work.png" width="1672" height="941"
+      <img src="illust/work.jpg" width="1400" height="788"
            alt="水晶ゆめとルナが案内するイラスト" loading="lazy" decoding="async">
     </div>
 
@@ -494,28 +530,52 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
   </div>
 </section>
 
+<!-- よるのあそびば -->
+<section class="section" id="play">
+  <div class="wrap sbody">
+    <h2>よるのあそびば</h2>
+    <p class="lead">PLAYGROUND</p>
+    <p>
+      がんばらないで遊べる、小さなゲームを置いています。<br>
+      夜の靄を、ルナと一緒に浄める3分のあそびです🌙
+    </p>
+    <a class="playcard" href="labs/yoru-wo-kiyomeru.html">
+      <span class="playthumb">
+        <img src="illust/luna-play.jpg" width="420" height="420"
+             alt="「よるを浄める」のイラスト" loading="lazy" decoding="async">
+      </span>
+      <span class="playbody">
+        <span class="playttl">よるを浄める</span>
+        <span class="playsub">ルナと歩く、しずかな夜</span>
+        <span class="playbtn">あそんでみる</span>
+      </span>
+    </a>
+  </div>
+</section>
+
 <!-- ⑦ お問い合わせ -->
 <section class="section alt" id="contact">
   <div class="wrap sbody">
     <h2>お問い合わせ</h2>
     <p class="lead">CONTACT</p>
     <p>お話をうかがうところから、ゆっくりで大丈夫です。よろしければ、こちらからお声がけください💫</p>
-    <form id="cform" novalidate>
+    <form id="cform" action="https://formspree.io/f/xeajqkby" method="POST" novalidate>
       <div>
         <label for="n">お名前</label>
-        <input id="n" name="n" type="text" placeholder="水晶 ゆめ">
+        <input id="n" name="name" type="text" placeholder="水晶 ゆめ" autocomplete="name">
       </div>
       <div>
         <label for="m">メールアドレス</label>
-        <input id="m" name="m" type="email" placeholder="you@example.com">
+        <input id="m" name="email" type="email" placeholder="you@example.com" autocomplete="email">
       </div>
       <div>
         <label for="b">ご相談内容</label>
-        <textarea id="b" name="b" placeholder="まだ固まっていない段階でも構いません。思っていることをそのまま書いてみてください。"></textarea>
+        <textarea id="b" name="message" placeholder="まだ固まっていない段階でも構いません。思っていることをそのまま書いてみてください。"></textarea>
       </div>
       <button class="send" type="submit">送信する</button>
       <p class="thanks" id="thanks"></p>
     </form>
+    <p class="mailto">メールでも: <a href="mailto:yumesuisho@gmail.com">yumesuisho@gmail.com</a></p>
   </div>
 </section>
 
@@ -523,6 +583,7 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
   <div class="wrap">
     <a href="#top">↑ 上に戻る</a>
     <p style="margin:0">© 水晶ゆめ</p>
+    <p class="labs"><a href="labs/yoru-wo-kiyomeru.html">labs</a></p>
   </div>
 </footer>
 
@@ -600,8 +661,29 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
     if(f&&!f.dataset.b){
       f.dataset.b="1";
       f.addEventListener("submit",function(e){
-        e.preventDefault();                    // 送信先は設定していません
-        document.getElementById("thanks").textContent="ありがとうございます🌙 内容を受け取りました。";
+        e.preventDefault();                    // ページを移動せずに送る
+        var th=document.getElementById("thanks");
+        var btn=f.querySelector("button.send");
+        var msg=f.querySelector("[name=message]");
+        if(msg&&!msg.value.trim()){
+          th.className="thanks warn";
+          th.textContent="よろしければ、ご相談内容を書いてから送ってください。";
+          msg.focus(); return;
+        }
+        th.className="thanks"; th.textContent="送信しています…";
+        btn.disabled=true;
+        fetch(f.action,{method:"POST",body:new FormData(f),headers:{Accept:"application/json"}})
+          .then(function(r){
+            if(!r.ok)throw new Error("送信できませんでした");
+            th.className="thanks";
+            th.textContent="ありがとうございます🌙 内容を受け取りました。";
+            f.reset();
+          })
+          .catch(function(){
+            th.className="thanks warn";
+            th.textContent="送信できませんでした。お手数ですが yumesuisho@gmail.com へ直接お送りください。";
+          })
+          .then(function(){ btn.disabled=false; });
       });
     }
   }
@@ -662,3 +744,5 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
 </script>
 </body>
 </html>
+
+
