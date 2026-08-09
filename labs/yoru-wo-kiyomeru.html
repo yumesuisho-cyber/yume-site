@@ -3,7 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>よるを浄める</title>
+<title>よるを浄める｜ルナと歩く、しずかな夜</title>
+<meta name="description" content="夜の靄を、ルナと一緒に浄める3分のミニゲーム。がんばらないで遊べます。スマホ対応。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yumesuisho-cyber.github.io/yume-site/labs/yoru-wo-kiyomeru.html">
+<meta property="og:title" content="よるを浄める｜ルナと歩く、しずかな夜">
+<meta property="og:description" content="夜の靄を、ルナと一緒に浄める3分のミニゲーム。がんばらないで遊べます。スマホ対応。">
+<meta property="og:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/luna-title.jpg">
+<meta property="og:image:width" content="760">
+<meta property="og:image:height" content="760">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="よるを浄める｜ルナと歩く、しずかな夜">
+<meta name="twitter:description" content="夜の靄を、ルナと一緒に浄める3分のミニゲーム。がんばらないで遊べます。スマホ対応。">
+<meta name="twitter:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/luna-title.jpg">
+<link rel="icon" href="../illust/favicon.png">
 <style>
 :root{
   --ink:#E6E1F5; --soft:#A79EC8; --violet:#9B7CD6; --pale:#D9CCFF;
@@ -148,7 +161,7 @@ var luna=loadImg(["../illust/luna-sprite.png","illust/luna-sprite.png"]);
 var titleHasArt=false;
 (function(){   /* タイトル絵: luna-title → 無ければ luna-sprite → どちらも無ければ光る球 */
   var el=document.getElementById("titleArt"), wrap=document.getElementById("titleWrap");
-  var names=["../illust/luna-title.png","illust/luna-title.png",
+  var names=["../illust/luna-title.jpg","illust/luna-title.jpg",
              "../illust/luna-sprite.png","illust/luna-sprite.png"], i=0;
   el.onerror=function(){
     i++;
@@ -700,4 +713,5 @@ requestAnimationFrame(frame);
 </script>
 </body>
 </html>
+
 
