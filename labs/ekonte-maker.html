@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>絵コンテメーカー｜AI動画のカット割りを、ブラウザで組む</title>
+<meta name="description" content="AI動画を作る前のカット割りを、ブラウザだけで組める道具です。イラストを枠に入れて、カメラと出来事を書くだけ。インストール不要、画像は外に出ません。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yumesuisho-cyber.github.io/yume-site/labs/ekonte-maker.html">
+<meta property="og:title" content="絵コンテメーカー｜AI動画のカット割りを、ブラウザで組む">
+<meta property="og:description" content="AI動画を作る前のカット割りを、ブラウザだけで組める道具です。イラストを枠に入れて、カメラと出来事を書くだけ。インストール不要、画像は外に出ません。">
+<meta property="og:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/ekonte-maker.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="絵コンテメーカー｜AI動画のカット割りを、ブラウザで組む">
+<meta name="twitter:description" content="AI動画を作る前のカット割りを、ブラウザだけで組める道具です。イラストを枠に入れて、カメラと出来事を書くだけ。">
+<meta name="twitter:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/ekonte-maker.jpg">
+<link rel="icon" href="../illust/favicon.png">
+<style>
+  :root{
+    --ink:#1a1a1f; --sub:#6b6b76; --line:#c9c9d2; --bg:#f4f4f6; --panel:#fff; --accent:#5a4b8a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:20px; background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+    font-feature-settings:"palt";
+  }
+
+  /* ---- 操作バー（スクショ時は隠せる） ---- */
+  .toolbar{
+    max-width:1180px; margin:0 auto 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    background:#fffdf3; border:1px solid #e6dcae; padding:10px 12px; font-size:12.5px;
+  }
+  .toolbar button{
+    font:inherit; font-size:12.5px; padding:6px 12px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line); color:var(--ink);
+  }
+  .toolbar button:hover{background:#eeeef2}
+  .toolbar .hint{color:#6b6b76; margin-left:auto; line-height:1.7}
+  .toolbar .home{color:#5a4b8a; text-decoration:underline; text-underline-offset:3px; white-space:nowrap}
+  .toolbar select{font:inherit; font-size:12.5px; padding:5px 8px; border:1px solid var(--line); background:#fff}
+
+  /* ---- シート ---- */
+  .sheet{
+    max-width:1180px; margin:0 auto 32px; background:var(--panel);
+    border:1px solid var(--line); padding:20px 22px;
+  }
+  .sheet-head{
+    display:flex; flex-wrap:wrap; gap:8px 24px; align-items:baseline;
+    border-bottom:1.5px solid var(--ink); padding-bottom:10px; margin-bottom:16px;
+    font-size:12.5px; color:var(--sub);
+  }
+  .sheet-head .ttl{font-size:15px; font-weight:700; color:var(--ink); letter-spacing:.02em}
+  .sheet-head .memo{margin-left:auto}
+
+  .grid{display:grid; gap:14px}
+  .grid[data-cols="2"]{grid-template-columns:repeat(2,1fr)}
+  .grid[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .grid[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+
+  .cut{border:1px solid var(--line); background:var(--panel); position:relative}
+  .cut-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:6px 9px; border-bottom:1px solid var(--line); font-size:12.5px;
+  }
+  .no{
+    font-weight:700; font-size:12px; min-width:20px; height:20px; line-height:20px;
+    text-align:center; background:var(--ink); color:#fff; flex:none;
+  }
+  .name{font-weight:600; min-width:3em}
+  .cam{margin-left:auto; color:var(--accent); font-weight:700; white-space:nowrap; text-align:right}
+
+  .slot{
+    position:relative; width:100%; background:#e9e9ee; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .slot[data-ratio="v"]{aspect-ratio:9/16}
+  .slot[data-ratio="h"]{aspect-ratio:16/9}
+  .slot[data-ratio="s"]{aspect-ratio:1/1}
+  .slot img{width:100%; height:100%; object-fit:cover; display:block}
+  .slot .ph{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:4px;
+    color:#9a9aa6; font-size:12px; text-align:center; padding:10px; pointer-events:none;
+  }
+  .slot.drop{outline:2px dashed var(--accent); outline-offset:-4px; background:#e3dff0}
+
+  .desc{padding:7px 9px; font-size:11.5px; line-height:1.65; color:#3a3a44}
+  .time{color:var(--sub); font-size:11px; display:block}
+
+  .cut-del{
+    position:absolute; top:4px; right:4px; z-index:5;
+    width:20px; height:20px; line-height:18px; text-align:center; cursor:pointer;
+    background:rgba(255,255,255,.9); border:1px solid var(--line); color:#a33; font-size:13px;
+  }
+  .cut-del:hover{background:#fee}
+
+  [contenteditable]:focus{outline:2px solid var(--accent); outline-offset:1px; background:#fbfaff}
+  [contenteditable]:empty:before{content:attr(data-ph); color:#b5b5c0}
+
+  /* ---- 使い方（ツール内ヘルプ） ---- */
+  .help{
+    position:fixed; inset:0; z-index:50; display:none;
+    background:rgba(26,26,31,.45); overflow:auto; padding:4vh 16px;
+  }
+  .help.open{display:block}
+  .help-panel{
+    max-width:680px; margin:0 auto; background:var(--panel);
+    border:1px solid var(--line); padding:22px 26px 26px; font-size:13px; line-height:1.9;
+  }
+  .help-panel h2{
+    margin:0 0 14px; font-size:15px; letter-spacing:.02em;
+    display:flex; align-items:center;
+  }
+  .help-panel h2 button{
+    margin-left:auto; font:inherit; font-size:13px; padding:4px 10px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line);
+  }
+  .help-panel h3{
+    margin:20px 0 6px; font-size:13px; color:var(--accent);
+    border-left:3px solid var(--accent); padding-left:8px;
+  }
+  .help-panel ul{margin:0; padding-left:1.4em}
+  .help-panel li{margin:2px 0}
+  .help-panel .cams{
+    background:#f4f4f6; border:1px solid var(--line); padding:8px 12px;
+    font-size:12.5px; line-height:2; letter-spacing:.02em;
+  }
+  .help-panel .warn{color:#8a3b3b; font-weight:600}
+  .help-panel .note{color:var(--sub); font-size:12px}
+
+  /* ---- 撮影モード ---- */
+  body.shoot .toolbar,
+  body.shoot .cut-del,
+  body.shoot .help{display:none}
+  body.shoot .slot{cursor:default}
+  body.shoot [contenteditable]{caret-color:transparent}
+
+  @media print{
+    body{background:#fff; padding:0}
+    .toolbar,.cut-del,.help{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button id="addCut">＋ コマを追加</button>
+  <label>並び
+    <select id="cols">
+      <option value="2">2列</option>
+      <option value="3" selected>3列</option>
+      <option value="4">4列</option>
+    </select>
+  </label>
+  <label>比率
+    <select id="ratio">
+      <option value="v">縦 9:16</option>
+      <option value="h">横 16:9</option>
+      <option value="s">正方形 1:1</option>
+    </select>
+  </label>
+  <button id="save">ファイルに保存</button>
+  <button id="load">ファイルを開く</button>
+  <button id="shoot">撮影モード（操作を隠す）</button>
+  <button id="helpBtn">？ 使い方</button>
+  <span class="hint">
+    文字は<b>クリックして直接編集</b>／画像は枠に<b>ドラッグ&ドロップ</b><br>
+    文字は<b>このブラウザに自動保存</b>。画像ごと残すなら<b>「ファイルに保存」</b>
+    　<a class="home" href="../">水晶ゆめのサイトへ</a>
+  </span>
+  <input type="file" id="loadFile" accept=".json,application/json" hidden>
+</div>
+
+<div class="sheet">
+  <div class="sheet-head">
+    <span class="ttl" contenteditable data-k="title" data-ph="作品タイトル"></span>
+    <span>尺: <span contenteditable data-k="len" data-ph="5秒"></span></span>
+    <span>形式: <span contenteditable data-k="fmt" data-ph="9:16 縦"></span></span>
+    <span>参照: <span contenteditable data-k="ref" data-ph="立ち絵2枚"></span></span>
+    <span class="memo" contenteditable data-k="memo" data-ph="メモ: 動きの狙いを一行で"></span>
+  </div>
+
+  <div class="grid" id="grid" data-cols="3"></div>
+</div>
+
+<!-- 使い方（READMEがなくても、このファイル1枚で分かるように） -->
+<div class="help" id="help">
+  <div class="help-panel">
+    <h2>絵コンテメーカーの使い方 <button id="helpClose">× 閉じる</button></h2>
+
+    <p>動画を作る前に、カット割りを決めるための道具です。<br>
+    AI動画は、プロンプトに「飛んでいる」という<b>状態</b>だけを書くと、いちばん動きの少ない地味な映像を返してきます。<br>
+    カットごとに「カメラがどう動くか」と「何が起きるか」を決めてから渡す——その設計図がこの絵コンテです。</p>
+
+    <h3>基本操作</h3>
+    <ul>
+      <li>文字（タイトル・カット名・カメラ指示・時間・説明）: <b>クリックして直接入力</b></li>
+      <li>画像: 枠に<b>ドラッグ&ドロップ</b>（枠をクリックしてファイル選択でも可）</li>
+      <li>コマを増やす: 「＋ コマを追加」／消す: コマ右上の「×」</li>
+      <li>並び（2〜4列）と比率（縦9:16／横16:9／正方形）は上のメニューで</li>
+      <li>記事用に撮る: <b>「撮影モード」</b>で操作を隠してスクリーンショット（<b>Esc</b>で戻る）</li>
+    </ul>
+
+    <h3>保存について</h3>
+    <ul>
+      <li><b>文字とレイアウトは、このブラウザに自動保存</b>されます。閉じても次に開いた時に残っています</li>
+      <li><b>画像は自動保存に含まれません</b>（容量のため）。画像ごと残したい時・別のPCに移したい時は<b>「ファイルに保存」</b>でJSONファイルに書き出し、<b>「ファイルを開く」</b>で復元します</li>
+      <li class="note">自動保存はこのブラウザの中だけです。ブラウザのデータ消去で消えるので、大事な絵コンテはファイルにも保存しておいてください</li>
+      <li class="note">画像はこのファイルとブラウザの中だけで扱われ、どこにも送信されません</li>
+    </ul>
+
+    <h3>カメラ指示の書き方</h3>
+    <p>カメラの動きは<b>1カットに1つだけ</b>。複数混ぜると、AIはどちらも中途半端にします。<br>
+    記号を頭につけると、シート全体を見た時に流れが追えます。</p>
+    <div class="cams">
+      ↑ 見上げ固定　　↓ 降下　　　→ 高速横移動<br>
+      → ゆっくり寄る　↺ 回り込み　↺ 低空追跡<br>
+      → トラック（並走）　↑ あおり上げ　↺ 見送り上げ
+    </div>
+
+    <h3>動きを出す4つのレバー</h3>
+    <p>地味な映像になる時は、だいたいこの4つが入っていません。カットごとにどれか1つ。上ほど効きます。</p>
+    <ul>
+      <li><b>被写体が画面の中を移動する</b>（横切る・駆ける・落ちる・振り向いて走り出す）← 最優先。カメラを動かすだけでは動いて見えません</li>
+      <li><b>距離が変わる</b>（遠くの点 → 手前で大きく → また遠ざかる）</li>
+      <li><b>カメラが動く</b>（追走・回り込み・あおり）</li>
+      <li><b>速度が変わる</b>（ためて、一気に）</li>
+    </ul>
+    <p class="note">時間割の目安: 出来事のない「間」のカットは3〜4秒に抑えて、長い秒数は出来事のあるカットに回します。</p>
+
+    <h3>できたシートの渡し方</h3>
+    <ul>
+      <li>シート（1枚に並べたもの）は<b>人間用</b>——設計の確認・記事に載せる用です</li>
+      <li>AIに渡すのは<b>コマの画像（バラバラ）</b>です</li>
+      <li class="warn">シートを1枚の画像としてAIに渡さないでください。文字が動画に描き込まれるうえ、「コマ割りされた画面」の動画ができてしまいます</li>
+    </ul>
+
+    <h3>制作の三段構え</h3>
+    <ul>
+      <li>1. 立ち絵——キャラを決める（安い・何度でも直せる）</li>
+      <li>2. キーフレーム——場面と構図を決める（安い・これが絵コンテになる）</li>
+      <li>3. 動画——最後（高い・一発勝負にしない）</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const grid   = document.getElementById('grid');
+  const colsEl = document.getElementById('cols');
+  const ratioEl= document.getElementById('ratio');
+  const LS_KEY = 'ekonte-maker-v1';
+
+  function renumber(){
+    [...grid.children].forEach((c,i)=>{ c.querySelector('.no').textContent = i+1; });
+  }
+
+  function showImage(slot, src){
+    let img = slot.querySelector('img');
+    if(!img){ img = document.createElement('img'); slot.prepend(img); }
+    img.src = src;
+    const ph = slot.querySelector('.ph');
+    if(ph) ph.style.display = 'none';
+  }
+
+  function makeCut(){
+    const ratio = ratioEl.value;
+    const el = document.createElement('div');
+    el.className = 'cut';
+    el.innerHTML = `
+      <div class="cut-del" title="このコマを削除">×</div>
+      <div class="cut-bar">
+        <span class="no">1</span>
+        <span class="name" contenteditable data-ph="カット名"></span>
+        <span class="cam" contenteditable data-ph="↑ カメラ指示"></span>
+      </div>
+      <div class="slot" data-ratio="${ratio}">
+        <input type="file" accept="image/*" hidden>
+        <div class="ph"><span>画像をドロップ</span><span>またはクリック</span></div>
+      </div>
+      <div class="desc">
+        <span class="time" contenteditable data-ph="0.0–1.5s"></span>
+        <span class="what" contenteditable data-ph="このカットで何が起きるか"></span>
+      </div>`;
+
+    const slot = el.querySelector('.slot');
+    const file = el.querySelector('input[type=file]');
+
+    const setImage = (f)=>{
+      if(!f || !f.type.startsWith('image/')) return;
+      const r = new FileReader();
+      r.onload = e=>{ showImage(slot, e.target.result); autoSave(); };
+      r.readAsDataURL(f);
+    };
+
+    slot.addEventListener('click', ()=>{ if(!document.body.classList.contains('shoot')) file.click(); });
+    file.addEventListener('change', ()=> setImage(file.files[0]));
+    ['dragenter','dragover'].forEach(ev=>slot.addEventListener(ev, e=>{
+      e.preventDefault(); slot.classList.add('drop');
+    }));
+    ['dragleave','drop'].forEach(ev=>slot.addEventListener(ev, e=>{
+      e.preventDefault(); slot.classList.remove('drop');
+    }));
+    slot.addEventListener('drop', e=> setImage(e.dataTransfer.files[0]));
+
+    el.querySelector('.cut-del').addEventListener('click', ()=>{ el.remove(); renumber(); autoSave(); });
+
+    grid.appendChild(el);
+    renumber();
+    return el;
+  }
+
+  /* ---- 保存（自動保存＝文字のみ／ファイル保存＝画像込み） ---- */
+
+  function getState(withImg){
+    const head = {};
+    document.querySelectorAll('.sheet-head [data-k]').forEach(s=>{ head[s.dataset.k] = s.innerText; });
+    return {
+      v: 1,
+      head,
+      cols: colsEl.value,
+      ratio: ratioEl.value,
+      cuts: [...grid.children].map(el=>{
+        const d = {
+          name: el.querySelector('.name').innerText,
+          cam:  el.querySelector('.cam').innerText,
+          time: el.querySelector('.time').innerText,
+          desc: el.querySelector('.what').innerText
+        };
+        if(withImg){
+          const img = el.querySelector('.slot img');
+          if(img) d.img = img.src;
+        }
+        return d;
+      })
+    };
+  }
+
+  function applyState(s){
+    if(!s || !Array.isArray(s.cuts)) return false;
+    document.querySelectorAll('.sheet-head [data-k]').forEach(sp=>{
+      if(s.head && s.head[sp.dataset.k] != null) sp.innerText = s.head[sp.dataset.k];
+    });
+    if(s.cols){ colsEl.value = s.cols; grid.dataset.cols = s.cols; }
+    if(s.ratio) ratioEl.value = s.ratio;
+    grid.innerHTML = '';
+    s.cuts.forEach(c=>{
+      const el = makeCut();
+      el.querySelector('.name').innerText = c.name || '';
+      el.querySelector('.cam').innerText  = c.cam  || '';
+      el.querySelector('.time').innerText = c.time || '';
+      el.querySelector('.what').innerText = c.desc || '';
+      if(c.img) showImage(el.querySelector('.slot'), c.img);
+    });
+    if(!s.cuts.length) makeCut();
+    renumber();
+    return true;
+  }
+
+  let saveTimer;
+  function autoSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(getState(false))); }catch(e){}
+    }, 400);
+  }
+  document.addEventListener('input', autoSave);
+
+  document.getElementById('save').addEventListener('click', ()=>{
+    const s = getState(true);
+    const name = (s.head.title || '').trim() || '絵コンテ';
+    const blob = new Blob([JSON.stringify(s)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+  });
+
+  const loadFile = document.getElementById('loadFile');
+  document.getElementById('load').addEventListener('click', ()=> loadFile.click());
+  loadFile.addEventListener('change', ()=>{
+    const f = loadFile.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = e=>{
+      try{
+        const s = JSON.parse(e.target.result);
+        if(applyState(s)) autoSave();
+        else alert('絵コンテのファイルではないようです');
+      }catch(err){
+        alert('読み込めませんでした（「ファイルに保存」で書き出したJSONか確認してください）');
+      }
+      loadFile.value = '';
+    };
+    r.readAsText(f);
+  });
+
+  /* ---- 操作 ---- */
+
+  document.getElementById('addCut').addEventListener('click', ()=>{ makeCut(); autoSave(); });
+
+  colsEl.addEventListener('change', ()=>{ grid.dataset.cols = colsEl.value; autoSave(); });
+
+  ratioEl.addEventListener('change', ()=>{
+    grid.querySelectorAll('.slot').forEach(s=> s.dataset.ratio = ratioEl.value);
+    autoSave();
+  });
+
+  document.getElementById('shoot').addEventListener('click', ()=>{
+    document.body.classList.add('shoot');
+    // 解除は Esc
+  });
+
+  const help = document.getElementById('help');
+  document.getElementById('helpBtn').addEventListener('click', ()=> help.classList.add('open'));
+  document.getElementById('helpClose').addEventListener('click', ()=> help.classList.remove('open'));
+  help.addEventListener('click', e=>{ if(e.target === help) help.classList.remove('open'); });
+
+  document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape') return;
+    if(help.classList.contains('open')) help.classList.remove('open');
+    else document.body.classList.remove('shoot');
+  });
+
+  /* ---- 起動: 前回の続きがあれば復元、なければ3コマ ---- */
+  let restored = false;
+  try{
+    const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if(s) restored = applyState(s);
+  }catch(e){}
+  if(!restored){ makeCut(); makeCut(); makeCut(); }
+</script>
+</body>
+</html>
