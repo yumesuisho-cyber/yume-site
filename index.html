@@ -184,6 +184,7 @@ a.card .meta{display:inline-block;margin-top:14px;font-size:13px;color:var(--pur
   transition:transform .35s ease,border-color .35s ease;
 }
 .playcard:hover{transform:translateY(-2px);border-color:var(--purple)}
+.playlist{display:flex;flex-direction:column;gap:14px}
 .playthumb{flex:0 0 104px;width:104px;height:104px;border-radius:10px;overflow:hidden;
   background:linear-gradient(135deg,#F3EEFC,#E9E2F6);display:block}
 html[data-theme="dark"] .playthumb{background:linear-gradient(135deg,#2A2440,#221E32)}
@@ -560,8 +561,9 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
     <p class="lead">PLAYGROUND</p>
     <p>
       がんばらないで遊べる、小さなゲームを置いています。<br>
-      夜の靄を、ルナと一緒に浄める3分のあそびです🌙
+      ゆめとルナと一緒に、夜のひとときをどうぞ🌙
     </p>
+    <div class="playlist">
     <a class="playcard" href="labs/yoru-wo-kiyomeru.html">
       <span class="playthumb">
         <img src="illust/luna-play.jpg" width="420" height="420"
@@ -573,6 +575,18 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
         <span class="playbtn">あそんでみる</span>
       </span>
     </a>
+    <a class="playcard" href="labs/hoshi-atsume.html">
+      <span class="playthumb">
+        <img src="illust/hoshi-atsume-thumb.jpg" width="420" height="420"
+             alt="「星あつめ」のゆめとルナ" loading="lazy" decoding="async">
+      </span>
+      <span class="playbody">
+        <span class="playttl">星あつめ</span>
+        <span class="playsub">同じ色をつないで、30秒の星あつめ</span>
+        <span class="playbtn">あそんでみる</span>
+      </span>
+    </a>
+    </div>
   </div>
 </section>
 
