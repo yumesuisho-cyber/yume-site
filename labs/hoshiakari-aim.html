@@ -1,0 +1,1853 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>星灯りエイム｜ゆめとルナと狙う、エイム練習</title>
+<meta name="description" content="エイムが上手くなる…かもしれない、夜空の練習場。ゆめかルナと一緒に、星を撃つ3つのモード。マウス・スマホ・ゲームパッド対応。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yumesuisho-cyber.github.io/yume-site/labs/hoshiakari-aim.html">
+<meta property="og:title" content="星灯りエイム｜ゆめとルナと狙う、エイム練習">
+<meta property="og:description" content="エイムが上手くなる…かもしれない、夜空の練習場。ゆめかルナと一緒に、星を撃つ3つのモード。マウス・スマホ・ゲームパッド対応。">
+<meta property="og:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/hoshiakari-ogp.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="星灯りエイム｜ゆめとルナと狙う、エイム練習">
+<meta name="twitter:description" content="エイムが上手くなる…かもしれない、夜空の練習場。ゆめかルナと一緒に、星を撃つ3つのモード。マウス・スマホ・ゲームパッド対応。">
+<meta name="twitter:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/hoshiakari-ogp.jpg">
+<link rel="icon" href="../illust/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Maru+Gothic:wght@400;700;900&display=swap">
+<style>
+/* Layout: one column — title, mode cards, settings row, the night-sky stage, ranking, tips. Single dark look by choice. */
+:root {
+  --bg: #0a0c1c;
+  --panel: #131733;
+  --line: #262b55;
+  --fg: #ece9ff;
+  --muted: #9b97c6;
+  --star: #ffd36e;
+  --moon: #9fe8ff;
+  --accent: #c49bff;
+  --display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  --body: "Zen Maru Gothic", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --pixel: "DotGothic16", ui-monospace, "Consolas", monospace;
+  color-scheme: dark;
+}
+html, body { height: auto; }
+body {
+  background: radial-gradient(1200px 600px at 50% -10%, #1c1f4a 0%, var(--bg) 60%) var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 28px 48px;
+  display: grid;
+  gap: 22px;
+}
+header { display: grid; gap: 4px; }
+.eyebrow {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: var(--accent);
+}
+h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: clamp(30px, 6vw, 46px);
+  line-height: 1.2;
+  text-wrap: balance;
+  color: var(--fg);
+  text-shadow: 0 0 18px rgba(255, 211, 110, .35);
+}
+h1 .glow { color: var(--star); }
+.lead { margin: 0; color: var(--muted); max-width: 60ch; }
+
+.modes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 860px) { .modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .modes { grid-template-columns: 1fr; } }
+.mode {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--fg);
+  min-width: 0;
+  transition: border-color .15s;
+}
+.mode:hover { border-color: var(--muted); }
+.mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mode[aria-checked="true"] {
+  border-color: var(--star);
+  box-shadow: 0 0 0 1px var(--star), 0 0 22px rgba(255, 211, 110, .18);
+}
+.mode .name { font-weight: 700; font-size: 16px; }
+.mode .kind { font-family: var(--pixel); font-size: 11px; letter-spacing: .12em; color: var(--accent); }
+.mode .desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+}
+.ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.pick, .tab, .toggle {
+  all: unset;
+  cursor: pointer;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  font-size: 14px;
+}
+.pick:focus-visible, .tab:focus-visible, .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pick[aria-checked="true"], .tab[aria-selected="true"], .toggle[aria-pressed="true"] { border-color: var(--star); color: var(--star); }
+.padstate {
+  font-family: var(--pixel);
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.padstate.on { color: var(--moon); border-color: var(--moon); }
+.ctl input[type="range"] { width: 96px; accent-color: var(--star); }
+.ctl output { font-family: var(--pixel); color: var(--fg); min-width: 2ch; }
+.ctl select, .ctl input[type="number"] {
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px 8px;
+}
+.ctl input[type="number"] { width: 5em; font-variant-numeric: tabular-nums; }
+.ctl select:focus-visible, .ctl input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sens-sub { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  align-items: baseline;
+  padding: 0 4px 8px;
+  font-family: var(--pixel);
+  font-variant-numeric: tabular-nums;
+}
+.hud div { display: flex; gap: 8px; align-items: baseline; }
+.hud .k { font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+.hud .v { font-size: 22px; color: var(--fg); }
+.hud .best .v { color: var(--star); }
+
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #070818;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+@media (max-width: 640px) { .stage { aspect-ratio: 3 / 4; } }
+canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+canvas.fpsmode { cursor: none; }
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px 16px 0;
+  background: rgba(7, 8, 24, .72);
+  backdrop-filter: blur(2px);
+  text-align: center;
+}
+.scene {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  max-width: 760px;
+}
+.scene .luna {
+  height: 92%;
+  max-height: 520px;
+  width: auto;
+  max-width: 40%;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 0 18px rgba(159, 232, 255, .18));
+}
+.card { display: grid; gap: 12px; justify-items: center; max-width: 34ch; align-self: center; }
+.card h2 { margin: 0; font-size: 22px; font-weight: 900; text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.bubble {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: var(--fg);
+  color: #1a1638;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.bubble::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  margin-top: -7px;
+  border: 7px solid transparent;
+  border-left: 0;
+  border-right-color: var(--fg);
+}
+@media (max-width: 640px) {
+  .scene { flex-direction: column; align-items: center; justify-content: center; }
+  .scene .luna { height: 26%; max-width: 60%; }
+  .bubble::before { left: 50%; top: -7px; margin: 0 0 0 -7px; border: 7px solid transparent; border-top: 0; border-bottom-color: var(--fg); }
+}
+.result-big {
+  font-family: var(--pixel);
+  font-size: clamp(40px, 9vw, 64px);
+  line-height: 1;
+  color: var(--star);
+  text-shadow: 0 0 20px rgba(255, 211, 110, .45);
+  font-variant-numeric: tabular-nums;
+}
+.result-unit { font-size: .4em; color: var(--muted); margin-left: 4px; }
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  font-family: var(--pixel);
+  font-size: 13px;
+  color: var(--fg);
+}
+.stats b { color: var(--moon); font-weight: 400; }
+.comment { color: var(--fg) !important; line-height: 1.8; }
+.go {
+  all: unset;
+  cursor: pointer;
+  padding: 10px 26px;
+  border-radius: 999px;
+  background: var(--star);
+  color: #1a1426;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 0 24px rgba(255, 211, 110, .35);
+}
+.go:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+.hint { font-size: 12px !important; }
+
+.board {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.board h2 { margin: 0; font-size: 18px; font-weight: 900; }
+.board h2 span { font-family: var(--pixel); font-size: 12px; color: var(--accent); margin-left: 8px; font-weight: 400; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.board-note { margin: 0; font-size: 13px; color: var(--muted); }
+.ranks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ranks li {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.ranks li:nth-child(-n+3) .no { color: var(--star); }
+.ranks li.me { background: rgba(255, 211, 110, .1); }
+.ranks .no { font-family: var(--pixel); color: var(--muted); }
+.ranks .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranks .who small { margin-left: 6px; font-size: 11px; color: var(--star); }
+.ranks .val { font-family: var(--pixel); font-size: 17px; }
+.ranks .empty { display: block; color: var(--muted); font-size: 13px; padding: 6px 10px; }
+.nick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.nick input {
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 10px;
+  width: 12em;
+  max-width: 100%;
+}
+.nick input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.nick button { all: unset; cursor: pointer; padding: 5px 14px; border-radius: 8px; background: var(--line); color: var(--fg); font-size: 13px; }
+.nick button:focus-visible { outline: 2px solid var(--accent); }
+
+.chart { position: relative; min-height: 180px; }
+.chart svg { display: block; width: 100%; height: 200px; overflow: visible; }
+.chart .tip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-family: var(--pixel);
+  font-size: 13px;
+  color: var(--fg);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chart-empty { margin: 0; padding: 24px 0; color: var(--muted); font-size: 13px; text-align: center; }
+.log-table summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.log-table ol { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-family: var(--pixel); font-size: 13px; font-variant-numeric: tabular-nums; }
+.log-table li { display: flex; justify-content: space-between; max-width: 16em; }
+
+.tips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 640px) { .tips { grid-template-columns: 1fr; gap: 10px; } }
+.tips div { min-width: 0; }
+.tips h3 { margin: 10px 0 2px; font-size: 14px; color: var(--moon); }
+.tips p { margin: 0; font-size: 13px; color: var(--muted); }
+footer { font-size: 12px; color: var(--muted); }
+</style>
+<style>*{box-sizing:border-box}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}
+.back{display:inline-block;font-size:13px;color:var(--muted);text-decoration:none;padding:4px 12px;border:1px solid var(--line);border-radius:999px}
+.back:hover{color:var(--fg);border-color:var(--muted)}
+.nick-note{flex-basis:100%;font-size:12px}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <p style="margin:0"><a class="back" href="../#play">← 水晶ゆめのサイトにもどる</a></p>
+  <header>
+    <p class="eyebrow">AIM PRACTICE · MAYBE</p>
+    <h1>星灯り<span class="glow">エイム</span></h1>
+    <p class="lead">エイムが上手くなる…かもしれない、夜空の練習場。1回30秒。外しても、星はまた灯ります。</p>
+  </header>
+
+  <div class="modes" role="radiogroup" aria-label="練習モード">
+    <button class="mode" id="m-flick" data-mode="flick" role="radio" aria-checked="true">
+      <span class="kind">FLICK · 30秒</span>
+      <span class="name">星つみ</span>
+      <span class="desc">3つの星を次々撃ち抜く。狙った場所へ、すばやく照準を運ぶ練習。</span>
+    </button>
+    <button class="mode" id="m-track" data-mode="track" role="radio" aria-checked="false">
+      <span class="kind">TRACKING · 30秒</span>
+      <span class="name">月追い</span>
+      <span class="desc">ふわふわ動く月に、照準を重ね続ける。動く相手を追う練習。</span>
+    </button>
+    <button class="mode" id="m-react" data-mode="react" role="radio" aria-checked="false">
+      <span class="kind">REACTION · 10回</span>
+      <span class="name">流れ星</span>
+      <span class="desc">星が灯った瞬間に撃つ。見てから撃つまでの速さを測る。</span>
+    </button>
+    <button class="mode" id="m-const" data-mode="const" role="radio" aria-checked="false">
+      <span class="kind">PRECISION · 30秒</span>
+      <span class="name">星座つなぎ</span>
+      <span class="desc">光る星を順番に撃って、線をつなぐ。小さな的を正確に撃つ練習。</span>
+    </button>
+  </div>
+
+  <div class="controls">
+    <div class="ctl" role="radiogroup" aria-label="いっしょに狙う子">
+      <span>いっしょに狙う子</span>
+      <button class="pick" id="p-yume" data-chara="yume" role="radio" aria-checked="true">ゆめ</button>
+      <button class="pick" id="p-luna" data-chara="luna" role="radio" aria-checked="false">ルナ</button>
+    </div>
+    <div class="ctl">
+      <button class="toggle" id="snd" aria-pressed="true">音：オン</button>
+      <label for="vol">音量</label>
+      <input type="range" id="vol" min="0" max="10" step="1" value="6">
+    </div>
+    <div class="ctl">
+      <label for="sensmode">マウス感度</label>
+      <select id="sensmode">
+        <option value="game">このゲームの感度</option>
+        <option value="apex">Apex Legends と同じ</option>
+      </select>
+      <span class="sens-sub" id="sens-game">
+        <input type="range" id="msens" min="1" max="10" step="1" value="5" aria-label="このゲームのマウス感度">
+        <output id="msens-out" for="msens">5</output>
+      </span>
+      <span class="sens-sub" id="sens-apex" hidden>
+        <label for="apexsens">Apex の感度</label>
+        <input type="number" id="apexsens" min="0.1" max="20" step="0.1" value="2">
+      </span>
+    </div>
+    <div class="ctl">
+      <span class="padstate" id="padstate">パッド：未接続</span>
+      <label for="padmode">パッド感度</label>
+      <select id="padmode">
+        <option value="game">このゲームの感度</option>
+        <option value="yume">ゆめの Apex 設定（ALC）</option>
+      </select>
+      <span class="sens-sub" id="pad-game">
+        <input type="range" id="sens" min="1" max="10" step="1" value="5" aria-label="このゲームのパッド感度">
+        <output id="sens-out" for="sens">5</output>
+      </span>
+    </div>
+    <div class="ctl" id="fov-ctl" hidden>
+      <label for="apexfov">Apex の FOV</label>
+      <input type="number" id="apexfov" min="70" max="110" step="1" value="90">
+    </div>
+  </div>
+
+  <div>
+    <div class="hud" aria-live="off">
+      <div><span class="k" id="hud-left-k">のこり</span><span class="v" id="hud-left">30.0</span></div>
+      <div><span class="k" id="hud-score-k">命中</span><span class="v" id="hud-score">0</span></div>
+      <div><span class="k" id="hud-acc-k">命中率</span><span class="v" id="hud-acc">–</span></div>
+      <div class="best"><span class="k">ベスト</span><span class="v" id="hud-best">–</span></div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="scene">
+          <img class="luna" src="../illust/hoshiakari-luna-front.png" alt="ルナ">
+          <div class="card" id="card"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="board" aria-labelledby="board-title">
+    <div class="board-head">
+      <h2 id="board-title">ランキング<span id="board-mode">星つみ</span></h2>
+      <div class="tabs" role="tablist" aria-label="操作方法">
+        <button class="tab" role="tab" data-input="mouse" aria-selected="true">マウス</button>
+        <button class="tab" role="tab" data-input="pad" aria-selected="false">パッド</button>
+        <button class="tab" role="tab" data-input="touch" aria-selected="false">タッチ</button>
+      </div>
+    </div>
+    <p class="board-note" id="board-note">ランキングを読みこんでいます。</p>
+    <ol class="ranks" id="ranks"></ol>
+    <form class="nick" id="nick-form">
+      <label for="nick">ニックネーム</label>
+      <input id="nick" maxlength="12" autocomplete="off" placeholder="12文字まで">
+      <button type="submit">保存</button>
+      <span id="nick-msg"></span>
+      <span class="nick-note">ニックネームは、このページに来た人みんなに見えます。本名は入れないでください。</span>
+    </form>
+  </section>
+
+  <section class="board" aria-labelledby="log-title">
+    <div class="board-head">
+      <h2 id="log-title">練習の記録<span id="log-mode">星つみ</span></h2>
+      <div class="tabs" role="tablist" aria-label="記録の操作方法">
+        <button class="tab logtab" role="tab" data-input="mouse" aria-selected="true">マウス</button>
+        <button class="tab logtab" role="tab" data-input="pad" aria-selected="false">パッド</button>
+        <button class="tab logtab" role="tab" data-input="touch" aria-selected="false">タッチ</button>
+      </div>
+    </div>
+    <p class="board-note" id="log-note">遊んだ日ごとのベストが、ここに線で並びます。</p>
+    <div class="chart" id="chart"></div>
+    <details class="log-table" id="log-table"><summary>数字で見る</summary><ol id="log-list"></ol></details>
+  </section>
+
+  <section class="tips" aria-label="練習のコツ">
+    <div>
+      <h3>速さより、まず正確に</h3>
+      <p>外しながら速く撃つより、当てながら少しずつ速くするほうが身につきやすいと言われています。</p>
+    </div>
+    <div>
+      <h3>1日数回で十分</h3>
+      <p>長くやるより、ゲームの前に2〜3回。手が温まったら、それでおしまいにしても大丈夫。</p>
+    </div>
+    <div>
+      <h3>感度はゲームと同じに</h3>
+      <p>本番で使うマウスやパッドの感度に近づけて練習すると、手の感覚がそのまま持っていけます。</p>
+    </div>
+  </section>
+  <footer>マウス：はじめるとカーソルが画面に固定され、動かすと視点が回ります。クリックで撃つ、Esc で中断。パッド：スティックで視点、RT か A で撃つ、LT を押している間はエイム（視点がゆっくりになる）、LB・RB でモード、Y でキャラ、スタートで中断。スマホ：星を直接タップ。「Apex Legends と同じ」は、Apex のマウス感度と FOV を入れると同じ手の動きで同じ角度だけ視点が回る設定です（Chrome・Edge はマウスの生の動きを使うので、ほぼ同じになります）。</footer>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const overlay = document.getElementById('overlay');
+  const card = document.getElementById('card');
+  const $ = id => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const MODES = {
+    flick: { name: '星つみ', time: 30 },
+    track: { name: '月追い', time: 30 },
+    react: { name: '流れ星', rounds: 10 },
+    const: { name: '星座つなぎ', time: 30 },
+  };
+  const MODE_ORDER = ['flick', 'track', 'react', 'const'];
+
+  // Constellation shapes for 星座つなぎ, in a 1×1 box (y grows downward). The shapes follow
+  // the real star patterns loosely; they are tidied for play. `order` is the shooting order,
+  // `edges` the lines drawn once both ends are lit.
+  const CONSTELLATIONS = [
+    { name: 'オリオン座', pts: [[.18, .08], [.78, .14], [.6, .47], [.48, .5], [.36, .53], [.26, .95], [.86, .9]],
+      edges: [[0, 1], [0, 4], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6]], order: [0, 1, 2, 3, 4, 5, 6] },
+    { name: 'カシオペヤ座', pts: [[0, .3], [.25, .8], [.5, .45], [.75, .9], [1, .25]],
+      edges: [[0, 1], [1, 2], [2, 3], [3, 4]], order: [0, 1, 2, 3, 4] },
+    { name: '北斗七星', pts: [[0, .45], [.22, .3], [.42, .28], [.62, .32], [.95, .2], [.95, .58], [.68, .64]],
+      edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]], order: [0, 1, 2, 3, 4, 5, 6] },
+    { name: 'はくちょう座', pts: [[.5, 0], [.5, .38], [.12, .5], [.88, .28], [.5, .7], [.5, 1]],
+      edges: [[0, 1], [1, 2], [1, 3], [1, 4], [4, 5]], order: [0, 1, 2, 3, 4, 5] },
+    { name: 'さそり座', pts: [[.12, 0], [.05, .18], [0, .34], [.24, .34], [.36, .5], [.43, .68], [.5, .85], [.66, .96], [.83, .9], [.9, .74], [.8, .63]],
+      edges: [[0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10]], order: [0, 2, 1, 3, 4, 5, 6, 7, 8, 9, 10] },
+  ];
+  const INPUT_NAME = { mouse: 'マウス', pad: 'パッド', touch: 'タッチ' };
+  let mode = 'flick';
+  let phase = 'idle';           // idle | count | play | result
+  let countEnd = 0, countStart = 0, lastTick = 0;
+  let g = null;
+  let W = 0, H = 0, dpr = 1, R = 24;
+  let WW = 0, WH = 0;           // the night sky (world) is larger than the screen in FPS view
+  let sky = [];
+
+  // view 'fps': the crosshair stays in the middle and the camera turns (mouse lock or pad).
+  // view 'direct': aim where the pointer is (touch, or a mouse that could not be locked).
+  let view = 'fps';
+  const cam = { x: 0, y: 0 };
+  const aim = { x: -1, y: -1, active: false };   // pointer position, direct view only
+  const sway = { x: 0, y: 0, kick: 0 };          // the partner lags behind turns and kicks on each shot
+  let spread = 0;                                // crosshair opens a little after each shot
+  let ads = false;                               // pad LT held: aiming down sights
+  let input = 'mouse';
+  let idleNote = '';
+
+  // ---------- small storage helpers (per viewer, optional) ----------
+  const ls = {
+    get(k) { try { return localStorage.getItem('hoshiaim-' + k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem('hoshiaim-' + k, v); } catch {} },
+  };
+  const better = { flick: (a, b) => a > b, track: (a, b) => a > b, react: (a, b) => a < b, const: (a, b) => a > b };
+  const fmt = (m, v) => v === null || v === undefined ? '–' : m === 'track' ? v + '%' : m === 'react' ? v + 'ms' : v + '個';
+  const bestKey = (m, i) => m + '_' + i;
+  function myBest(m, i) { const v = ls.get('best-' + bestKey(m, i)); return v === null ? null : Number(v); }
+  function myHistory(m, i) { try { return JSON.parse(ls.get('hist-' + bestKey(m, i)) || '[]'); } catch { return []; } }
+  function recordLocal(m, i, v) {
+    const h = myHistory(m, i).concat(v).sort((a, b) => better[m](a, b) ? -1 : 1).slice(0, 10);
+    ls.set('hist-' + bestKey(m, i), JSON.stringify(h));
+    const prev = myBest(m, i);
+    if (prev === null || better[m](v, prev)) ls.set('best-' + bestKey(m, i), String(v));
+    // The best of each day, for the 練習の記録 chart.
+    const days = myDays(m, i), d = today();
+    if (days[d] === undefined || better[m](v, days[d])) { days[d] = v; ls.set('days-' + bestKey(m, i), JSON.stringify(days)); }
+    return prev;
+  }
+  function myDays(m, i) { try { const o = JSON.parse(ls.get('days-' + bestKey(m, i)) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
+  // ---------- sound (synthesized, no files) ----------
+  const sfx = (() => {
+    let ac = null, master = null, hum = null, noiseBuf = null;
+    let vol = Number(ls.get('vol') ?? 6), on = ls.get('sound') !== 'off';
+    if (!Number.isFinite(vol)) vol = 6;
+    const level = () => on ? Math.pow(vol / 10, 1.6) * 0.9 : 0;
+    function ready() {
+      if (ac) return true;
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        master = ac.createGain(); master.gain.value = level(); master.connect(ac.destination);
+        noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.2, ac.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      } catch { ac = null; }
+      return !!ac;
+    }
+    function tone(freq, dur, { type = 'sine', gain = .2, attack = .004, slide = 0, delay = 0 } = {}) {
+      if (!ac || !on) return;
+      const t = ac.currentTime + delay;
+      const o = ac.createOscillator(), gn = ac.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * slide), t + dur);
+      gn.gain.setValueAtTime(0.0001, t);
+      gn.gain.linearRampToValueAtTime(gain, t + attack);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(gn).connect(master);
+      o.start(t); o.stop(t + dur + .03);
+    }
+    function noise(dur, { gain = .06, freq = 4000, q = .8 } = {}) {
+      if (!ac || !on) return;
+      const t = ac.currentTime;
+      const s = ac.createBufferSource(), f = ac.createBiquadFilter(), gn = ac.createGain();
+      s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+      gn.gain.setValueAtTime(gain, t);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f).connect(gn).connect(master);
+      s.start(t); s.stop(t + dur + .02);
+    }
+    return {
+      unlock() { if (ready() && ac.state === 'suspended') ac.resume().catch(() => {}); },
+      setVolume(v) { vol = v; ls.set('vol', String(v)); if (master) master.gain.setTargetAtTime(level(), ac.currentTime, .02); },
+      setOn(v) { on = v; ls.set('sound', v ? 'on' : 'off'); if (master) master.gain.setTargetAtTime(level(), ac.currentTime, .02); if (!v) this.hum(false); },
+      get on() { return on; }, get volume() { return vol; },
+      shot() { tone(1250, .08, { type: 'triangle', gain: .07, slide: .3 }); noise(.05, { gain: .05, freq: 5200 }); },
+      hit(combo = 0) {
+        const f = 1320 * Math.pow(2, Math.min(combo, 12) / 24);   // a little higher with each hit in a row
+        tone(f, .26, { gain: .12 }); tone(f * 1.5, .2, { gain: .05, delay: .012 });
+      },
+      miss() { tone(220, .12, { gain: .07, slide: .6 }); },
+      early() { tone(300, .2, { type: 'square', gain: .025, slide: .7 }); },
+      tick() { tone(660, .09, { gain: .09 }); },
+      go() { tone(990, .2, { gain: .11 }); tone(1485, .2, { gain: .04 }); },
+      constellation() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, .5, { gain: .06, delay: i * .06 })); },
+      finish(best) {
+        [523, 659, 784, 1047].forEach((f, i) => tone(f, .34, { gain: .09, delay: i * .09 }));
+        if (best) [1319, 1568, 2093].forEach((f, i) => tone(f, .42, { gain: .05, delay: .42 + i * .08 }));
+      },
+      // The moon hums softly while the crosshair is on it.
+      hum(onMoon) {
+        if (!ac) return;
+        if (!hum && onMoon && on) {
+          const gn = ac.createGain(); gn.gain.value = 0; gn.connect(master);
+          const a = ac.createOscillator(), b = ac.createOscillator();
+          a.frequency.value = 523; b.frequency.value = 784; b.detune.value = 6;
+          a.connect(gn); b.connect(gn); a.start(); b.start();
+          hum = { gn, a, b };
+        }
+        if (hum) hum.gn.gain.setTargetAtTime(onMoon && on ? .035 : 0, ac.currentTime, .05);
+      },
+    };
+  })();
+
+  // ---------- partner (back view, the "weapon" in your hands) ----------
+  const load = src => { const im = new Image(); im.src = src; return im; };
+  const CHARA = {
+    yume: { img: load('../illust/hoshiakari-yume-back.png'), orb: [0.935, 0.112], core: '#f3eaff', glow: 'rgba(196, 155, 255, .65)', spark: '#d9c2ff' },
+    luna: { img: load('../illust/hoshiakari-luna-back.png'), orb: [0.918, 0.143], core: '#e6fbff', glow: 'rgba(159, 232, 255, .65)', spark: '#9fe8ff' },
+  };
+  let chara = CHARA[ls.get('chara')] ? ls.get('chara') : 'yume';
+  let cb = null;
+  let flash = 0;
+  function charBox(now) {
+    const c = CHARA[chara], im = c.img;
+    if (!im.complete || !im.naturalWidth) return null;
+    const ar = im.naturalWidth / im.naturalHeight;
+    const h = Math.min(H * 0.75, W * 0.3 / ar), w = h * ar;
+    const bob = reduce ? 0 : Math.sin(now / 900) * 3;
+    // Over-the-shoulder: the orb sits just right of center, the body just left of it.
+    const x = W / 2 - w * (c.orb[0] - 0.05) + sway.x;
+    const y = H - h * 0.55 + bob + sway.y + sway.kick * 12;
+    return { x, y, w, h, ox: x + c.orb[0] * w, oy: y + c.orb[1] * h };
+  }
+  function selectChara(c) {
+    if (phase === 'play' || phase === 'count') return;
+    chara = c;
+    document.querySelectorAll('.pick').forEach(b => b.setAttribute('aria-checked', String(b.dataset.chara === c)));
+    ls.set('chara', c);
+  }
+
+  // ---------- sizing and camera ----------
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    R = Math.max(16, Math.min(34, Math.min(W, H) * 0.05));
+    WW = W * 2; WH = H * 1.6;
+    if (!sky.length) sky = Array.from({ length: 460 }, () => ({
+      x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + .2, p: Math.random() * 6.28, s: .5 + Math.random() * 1.5, d: .55 + Math.random() * .45,
+    }));
+    if (aim.x < 0) { aim.x = W / 2; aim.y = H / 2; }
+    clampCam();
+  }
+  new ResizeObserver(resize).observe(stage);
+
+  function clampCam() {
+    if (view !== 'fps') { cam.x = 0; cam.y = 0; return; }
+    cam.x = Math.max(0, Math.min(WW - W, cam.x));
+    cam.y = Math.max(0, Math.min(WH - H, cam.y));
+  }
+  function centerCam() { cam.x = (WW - W) / 2; cam.y = (WH - H) / 2; clampCam(); }
+  function moveCam(dx, dy) {
+    const bx = cam.x, by = cam.y;
+    cam.x += dx; cam.y += dy;
+    clampCam();
+    if (reduce) return;
+    sway.x = Math.max(-22, Math.min(22, sway.x - (cam.x - bx) * 0.06));
+    sway.y = Math.max(-14, Math.min(14, sway.y - (cam.y - by) * 0.04));
+  }
+  // Where the shot lands, in world coordinates.
+  function aimWorld() {
+    return view === 'fps' ? { x: cam.x + W / 2, y: cam.y + H / 2, active: true } : { x: aim.x, y: aim.y, active: aim.active };
+  }
+  const locked = () => document.pointerLockElement === cv;
+  // Ask for raw mouse counts (no OS pointer speed or acceleration) so a game's sensitivity
+  // carries over. Browsers that don't offer it fire pointerlockerror; we then ask once more
+  // for an ordinary lock, and only fall back to the pointer if that fails too.
+  let lockTry = 0;
+  function requestLock() {
+    if (!cv.requestPointerLock) return false;
+    lockTry = 1;
+    try {
+      const p = cv.requestPointerLock({ unadjustedMovement: true });
+      if (p && p.catch) p.catch(() => {});
+    } catch { lockTry = 2; try { cv.requestPointerLock(); } catch { return false; } }
+    return true;
+  }
+  function updateCursor() { cv.classList.toggle('fpsmode', view === 'fps' && (phase === 'play' || phase === 'count')); }
+
+  // ---------- helpers ----------
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+  // A free spot for a target. In FPS view it is anywhere the crosshair can reach;
+  // with inView it also has to be on screen right now (used by the reaction mode).
+  function spot(r, avoid = [], inView = false) {
+    const m = r + 10;
+    let x0, x1, y0, y1;
+    if (view === 'fps') {
+      x0 = W / 2; x1 = WW - W / 2; y0 = H / 2; y1 = WH - H / 2;
+      if (inView) { x0 = Math.max(x0, cam.x + m); x1 = Math.min(x1, cam.x + W - m); y0 = Math.max(y0, cam.y + m); y1 = Math.min(y1, cam.y + H * .62); }
+    } else { x0 = m; x1 = W - m; y0 = m; y1 = H - m; }
+    let p;
+    for (let i = 0; i < 50; i++) {
+      p = { x: rand(x0, x1), y: rand(y0, y1) };
+      const sx = p.x - cam.x, sy = p.y - cam.y;
+      const onPartner = (view === 'direct' || inView) && cb && sx > cb.x - r && sx < cb.x + cb.w + r && sy > cb.y - r;
+      const onCross = view === 'fps' && inView && dist(sx, sy, W / 2, H / 2) < r * 3;
+      if (!onPartner && !onCross && avoid.every(o => dist(p.x, p.y, o.x, o.y) > r * 3.2)) break;
+    }
+    return p;
+  }
+  function burst(x, y, color, n = 14) {
+    if (reduce || !g) return;
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, Math.PI * 2), s = rand(60, 220);
+      g.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, color });
+    }
+  }
+  // A glowing orb flies from the partner's hand to a world point. Hits are judged at the
+  // moment of the shot, so the flight time never changes a score.
+  function shoot(wx, wy, now, onLand, small) {
+    if (!g) return;
+    const sx = cb ? cb.ox : W / 2, sy = cb ? cb.oy : H;
+    const d = dist(sx, sy, wx - cam.x, wy - cam.y);
+    g.shots.push({ sx, sy, wx, wy, t0: now, dur: Math.max(70, Math.min(200, d / 2.8)), onLand, small });
+    flash = 1;
+  }
+  function rumble(strong) {
+    if (input !== 'pad') return;
+    try {
+      const gp = currentPad();
+      gp?.vibrationActuator?.playEffect?.('dual-rumble', { duration: strong ? 70 : 40, strongMagnitude: strong ? .35 : .1, weakMagnitude: strong ? .6 : .25 });
+    } catch {}
+  }
+
+  // ---------- game flow ----------
+  function selectMode(m) {
+    if (phase === 'play' || phase === 'count') return;
+    mode = m;
+    document.querySelectorAll('.mode').forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === m)));
+    phase = 'idle';
+    showIdle();
+    resetHud();
+    renderBoard();
+    renderLog();
+  }
+
+  function resetHud() {
+    const M = MODES[mode];
+    if (mode === 'flick') { $('hud-left-k').textContent = 'のこり'; $('hud-left').textContent = M.time.toFixed(1); $('hud-score-k').textContent = '命中'; $('hud-score').textContent = '0'; $('hud-acc-k').textContent = '命中率'; $('hud-acc').textContent = '–'; }
+    if (mode === 'track') { $('hud-left-k').textContent = 'のこり'; $('hud-left').textContent = M.time.toFixed(1); $('hud-score-k').textContent = '重なり'; $('hud-score').textContent = '0%'; $('hud-acc-k').textContent = 'いま'; $('hud-acc').textContent = '–'; }
+    if (mode === 'react') { $('hud-left-k').textContent = 'のこり'; $('hud-left').textContent = M.rounds + '回'; $('hud-score-k').textContent = '平均'; $('hud-score').textContent = '–'; $('hud-acc-k').textContent = '前回'; $('hud-acc').textContent = '–'; }
+    if (mode === 'const') { $('hud-left-k').textContent = 'のこり'; $('hud-left').textContent = M.time.toFixed(1); $('hud-score-k').textContent = '星'; $('hud-score').textContent = '0'; $('hud-acc-k').textContent = '星座'; $('hud-acc').textContent = '0'; }
+    $('hud-best').textContent = fmt(mode, myBest(mode, input));
+  }
+
+  function hintFor() {
+    if (input === 'pad') return 'A：はじめる ／ LB・RB：モード ／ Y：キャラ ／ 遊んでいる間は LT でエイム';
+    if (input === 'touch') return '押すと3秒のカウントダウンのあとに始まります';
+    return 'はじめるとカーソルが画面に固定されます。Esc でいつでも中断できます';
+  }
+
+  function showIdle() {
+    const how = {
+      flick: '照準を星に重ねて撃ち抜きましょう。画面の外の星は、ふちの矢印が教えてくれます。外した玉は命中率に入ります。',
+      track: '動く月に照準を重ねたままにします。重なっている間、玉が自動で飛んで、月がやさしく鳴ります。',
+      react: '空が静かになったら待って、星が灯った瞬間に撃ちます。灯る前に撃つとやり直しです。星が出るときは音が鳴りません。',
+      const: '光っている星を順番に撃つと、線がつながって星座が完成します。星は小さめです。形はゲーム用に少し整えています。',
+    }[mode];
+    const say = {
+      flick: '星、3つ灯ってるよ！　ぜんぶ撃ち抜いてみよう',
+      track: '月はね、じっとしてないんだよ。追いかけてみて！',
+      react: '星が灯ったら、すぐだよ！',
+      const: '星をつなぐと、星座になるよ！　どの星座かな？',
+    }[mode];
+    card.innerHTML = `
+      <div class="bubble">${say}</div>
+      <h2>${MODES[mode].name}</h2>
+      <p>${idleNote || how}</p>
+      <button class="go" id="go">はじめる</button>
+      <p class="hint">${hintFor()}</p>`;
+    idleNote = '';
+    overlay.hidden = false;
+    $('go').addEventListener('click', start);
+  }
+
+  function start() {
+    if (phase === 'play' || phase === 'count') return;
+    sfx.unlock();
+    view = input === 'touch' ? 'direct' : 'fps';
+    if (view === 'fps' && input === 'mouse' && !requestLock()) view = 'direct';
+    centerCam();
+    sway.x = sway.y = sway.kick = 0;
+    overlay.hidden = true;
+    phase = 'count';
+    countStart = performance.now();
+    countEnd = countStart + 3000;
+    lastTick = 0;
+    updateCursor();
+    resetHud();
+  }
+
+  function begin(now) {
+    phase = 'play';
+    g = { t0: now, hits: 0, misses: 0, times: [], targets: [], ghosts: [], parts: [], marks: [], shots: [],
+          on: 0, total: 0, round: 0, early: 0, wait: 0, shown: null, msg: null, stream: 0, combo: 0, comboAt: 0, hm: null,
+          lit: 0, done: [], con: null, pending: 0,
+          used: { [input]: true } };
+    if (mode === 'const') placeConstellation(now);
+    if (mode === 'flick') {
+      // The first star is always on screen, so the run starts with a target in sight.
+      g.targets.push({ ...spot(R, [], true), t: now, born: now });
+      for (let i = 0; i < 2; i++) g.targets.push({ ...spot(R, g.targets), t: now, born: now });
+    }
+    if (mode === 'track') {
+      const sp = Math.min(W, H) * 0.5;
+      const sx = view === 'fps' ? cam.x + W / 2 : W / 2, sy = view === 'fps' ? cam.y + H * .4 : H * .35;
+      g.orb = { x: sx, y: sy, vx: sp, vy: 0, tx: sp, ty: 0, turn: now + 800, sp };
+    }
+    if (mode === 'react') g.wait = now + rand(900, 2600);
+    sfx.go();
+    updateCursor();
+  }
+
+  // Constellation stars are a little smaller than the other targets: this mode is about precision.
+  const CR = () => R * 0.8;
+  function placeConstellation(now) {
+    const prev = g.con ? g.con.def.name : null;
+    const pool = CONSTELLATIONS.filter(c => c.name !== prev);
+    const def = pool[Math.floor(Math.random() * pool.length)];
+    let S, cx, cy;
+    if (view === 'fps') {
+      // The whole shape has to sit where the crosshair can reach.
+      S = Math.min(W * 0.6, (WH - H) * 0.95);
+      const x0 = W / 2 + S / 2, x1 = WW - W / 2 - S / 2, y0 = H / 2 + S / 2, y1 = WH - H / 2 - S / 2;
+      const fit = (v, a, b) => b > a ? Math.max(a, Math.min(b, v)) : (a + b) / 2;
+      if (!g.con) { cx = fit(cam.x + W / 2, x0, x1); cy = fit(cam.y + H * .42, y0, y1); }   // the first one starts in sight
+      else { cx = x1 > x0 ? rand(x0, x1) : (x0 + x1) / 2; cy = y1 > y0 ? rand(y0, y1) : (y0 + y1) / 2; }
+    } else {
+      const m = CR() + 12, top = cb ? cb.y - m : H - m;
+      S = Math.min(W - 2 * m, top - m) * 0.92;
+      cx = W / 2; cy = m + (top - m) / 2;
+    }
+    g.con = { def, S, cx, cy, stars: def.pts.map(([px, py]) => ({ x: cx - S / 2 + px * S, y: cy - S / 2 + py * S, lit: false })), next: 0, last: now };
+  }
+
+  // The device a run counts under: a pad if it was used at all, else touch, else mouse.
+  function runInput() { return g.used.pad ? 'pad' : g.used.touch ? 'touch' : 'mouse'; }
+
+  function leaveLock() { try { if (locked()) document.exitPointerLock(); } catch {} }
+
+  function finish() {
+    phase = 'result';
+    sfx.hum(false);
+    leaveLock();
+    updateCursor();
+    let main, unit, stats, comment, val, good;
+    if (mode === 'flick') {
+      const shots = g.hits + g.misses;
+      const acc = shots ? g.hits / shots : 0;
+      const avg = g.times.length ? Math.round(g.times.reduce((a, b) => a + b, 0) / g.times.length) : 0;
+      val = g.hits; main = g.hits; unit = '個'; good = shots > 0 && acc >= .75;
+      stats = `<span>命中率 <b>${Math.round(acc * 100)}%</b></span><span>1個あたり <b>${avg}ms</b></span><span>最大連続 <b>${g.bestCombo || 0}</b></span>`;
+      comment = !shots ? '今日は空を眺めるだけの夜でも、いいと思います。'
+        : acc < .6 ? '速さはもう出ています。次は少しだけ落ち着いて、星の真ん中を狙ってみてください。'
+        : acc > .92 && avg > 700 ? 'とても正確です。次は、ほんの少し急いでみても大丈夫かもしれません。'
+        : 'いいリズムです。手が温まったなら、今日はここまででも十分です。';
+    }
+    if (mode === 'track') {
+      const pct = g.total ? Math.round(g.on / g.total * 100) : 0;
+      val = pct; main = pct; unit = '%'; good = pct >= 50;
+      stats = `<span>重なっていた時間 <b>${g.on.toFixed(1)}秒</b></span><span>/ <b>${g.total.toFixed(0)}秒</b></span>`;
+      comment = pct < 35 ? '月はとても気まぐれです。照準より先に、目で行き先を追ってみると少し楽になるかもしれません。'
+        : pct < 65 ? 'ちゃんと追いかけられています。小さく細かく動かすと、離れにくくなるかもしれません。'
+        : 'ほとんど離れずに追えています。月のほうが照れているかもしれません。';
+    }
+    if (mode === 'const') {
+      const shots = g.hits + g.misses;
+      const acc = shots ? g.hits / shots : 0;
+      val = g.lit; main = g.lit; unit = '個'; good = shots > 0 && acc >= .75;
+      const names = g.done.length ? g.done.slice(0, 3).join('・') + (g.done.length > 3 ? ' ほか' : '') : 'まだ途中';
+      stats = `<span>つないだ星座 <b>${g.done.length}</b></span><span>命中率 <b>${Math.round(acc * 100)}%</b></span><span>${names}</span>`;
+      comment = !shots ? '今夜は星を眺めるだけでも、いいと思います。'
+        : g.done.length === 0 ? '星座はあと少しでした。小さな星は、ゆっくり置きにいくくらいでちょうどいいかもしれません。'
+        : acc < .6 ? `${g.done[0]}をつなげました。外した玉が多いときは、照準を止めてから撃つと当たりやすくなります。`
+        : `今夜は${g.done.length}つの星座をつなげました。夜空に、あなたの線が残っています。`;
+    }
+    if (mode === 'react') {
+      const avg = g.times.length ? Math.round(g.times.reduce((a, b) => a + b, 0) / g.times.length) : 0;
+      const fast = g.times.length ? Math.round(Math.min(...g.times)) : 0;
+      val = avg; main = avg; unit = 'ms'; good = g.times.length > 0 && avg < 380;
+      stats = `<span>いちばん速い <b>${fast}ms</b></span><span>フライング <b>${g.early}</b></span><span>外した <b>${g.misses}</b></span>`;
+      comment = avg < 280 ? 'とても速い反応です。見てから撃つまでが、ほとんど一瞬でした。'
+        : avg < 380 ? 'いい反応です。数字は日によって揺れるので、今日の調子のめやすにしてください。'
+        : '反応の速さは、眠さや疲れでいちばん変わります。遅い夜があっても、それは当然のことです。';
+    }
+    const used = runInput();
+    const counts = mode !== 'react' || g.times.length > 0;
+    const prev = counts ? recordLocal(mode, used, val) : myBest(mode, used);
+    const isBest = counts && prev !== null && better[mode](val, prev);
+    sfx.finish(isBest);
+    if (mode === 'react') $('hud-acc').textContent = main + 'ms';
+    $('hud-best').textContent = fmt(mode, myBest(mode, input));
+    boardInput = used;
+    logInput = used;
+    if (counts) pushScores();
+    renderBoard();
+    renderLog();
+
+    const call = chara === 'yume' ? 'ゆめちゃん、' : '';
+    const say = isBest ? 'えーっ、ベスト更新！？'
+      : prev === null && counts ? 'はじめての記録だね！'
+      : good ? call + 'いい感じだね！　もう一回いく？'
+      : 'ふうん、今日はゆっくりの夜だね。もう一回いく？';
+    card.innerHTML = `
+      <div class="bubble">${say}</div>
+      <p>${MODES[mode].name} の結果（${INPUT_NAME[used]}）</p>
+      <div class="result-big">${main}<span class="result-unit">${unit}</span></div>
+      <div class="stats">${stats}</div>
+      <p class="comment">${comment}</p>
+      <button class="go" id="go">もう一度</button>
+      <p class="hint">${hintFor()}</p>`;
+    overlay.hidden = false;
+    $('go').addEventListener('click', start);
+  }
+
+  function abort(note) {
+    if (phase !== 'play' && phase !== 'count') return;
+    phase = 'idle';
+    g = null;
+    sfx.hum(false);
+    leaveLock();
+    updateCursor();
+    idleNote = note || '';
+    resetHud();
+    showIdle();
+  }
+
+  // ---------- firing (shared by mouse, touch and pad) ----------
+  function fire(wx, wy) {
+    if (phase !== 'play') return;
+    const now = performance.now();
+    if (mode === 'track') return;   // the moon is shot automatically while you stay on it
+    sfx.shot();
+    spread = Math.min(3, spread + 1);
+    sway.kick = reduce ? 0 : 1;
+    const hit = (x, y) => {
+      g.combo++; g.comboAt = now; g.bestCombo = Math.max(g.bestCombo || 0, g.combo);
+      g.hm = { t: now, x: wx, y: wy };
+      sfx.hit(g.combo - 1);
+      rumble(true);
+      const ghost = { x, y };
+      g.ghosts.push(ghost);
+      shoot(x, y, now, () => { g.ghosts = g.ghosts.filter(o => o !== ghost); burst(x, y, '#ffd36e'); });
+    };
+    const miss = () => {
+      g.combo = 0;
+      sfx.miss();
+      rumble(false);
+      shoot(wx, wy, now, () => g.marks.push({ x: wx, y: wy, life: 1 }));
+    };
+    if (mode === 'flick') {
+      const i = g.targets.findIndex(t => dist(wx, wy, t.x, t.y) <= R);
+      if (i >= 0) {
+        const t = g.targets[i];
+        g.hits++; g.times.push(now - t.t);
+        hit(t.x, t.y);
+        const others = g.targets.filter((_, j) => j !== i);
+        g.targets[i] = { ...spot(R, others), t: now, born: now };
+      } else { g.misses++; miss(); }
+    }
+    if (mode === 'const') {
+      const c = g.con;
+      if (!c || g.pending) { shoot(wx, wy, now, null); return; }   // between two constellations: nothing to hit, nothing counted
+      const t = c.stars[c.def.order[c.next]];
+      if (dist(wx, wy, t.x, t.y) <= CR() * 1.2) {
+        t.lit = true; c.next++; g.lit++; g.hits++;
+        g.times.push(now - c.last); c.last = now;
+        hit(t.x, t.y);
+        if (c.next >= c.def.order.length) {
+          g.done.push(c.def.name);
+          g.msg = { text: c.def.name, until: now + 1500, wx: c.cx, wy: c.cy - c.S / 2 - 22 };
+          sfx.constellation();
+          g.pending = now + 700;
+        }
+      } else { g.misses++; miss(); }
+    }
+    if (mode === 'react') {
+      if (!g.shown) {
+        g.early++;
+        g.combo = 0;
+        sfx.early();
+        g.msg = { text: 'まだ灯っていません。もう一度、静かに待って', until: now + 1100 };
+        g.wait = now + rand(1100, 2600);
+        shoot(wx, wy, now, () => g.marks.push({ x: wx, y: wy, life: 1 }));
+      } else if (dist(wx, wy, g.shown.x, g.shown.y) <= R * 1.6) {
+        const s = g.shown, rt = now - s.t;
+        g.times.push(rt); g.round++;
+        hit(s.x, s.y);
+        g.msg = { text: Math.round(rt) + 'ms', until: now + 700 };
+        g.shown = null;
+        g.wait = now + rand(900, 2600);
+      } else { g.misses++; miss(); }
+    }
+  }
+
+  // ---------- mouse / touch ----------
+  function local(e) {
+    const r = cv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function useInput(kind) {
+    input = kind;
+    if (g && phase === 'play') g.used[kind] = true;
+  }
+  cv.addEventListener('pointermove', e => {
+    if (locked()) return;
+    const p = local(e);
+    aim.x = p.x; aim.y = p.y; aim.active = true;
+    if (phase !== 'play' && phase !== 'count') useInput(e.pointerType === 'mouse' ? 'mouse' : 'touch');
+    else if (view === 'direct') useInput(e.pointerType === 'mouse' ? 'mouse' : 'touch');
+  });
+  cv.addEventListener('pointerleave', () => { if (view === 'direct') aim.active = false; });
+  cv.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') aim.active = false; });
+  cv.addEventListener('pointerdown', e => {
+    if (view === 'fps' && (phase === 'play' || phase === 'count')) {
+      if (input === 'mouse' && !locked()) requestLock();
+      if (e.pointerType === 'mouse') useInput(input === 'pad' ? 'pad' : 'mouse');
+      const a = aimWorld();
+      fire(a.x, a.y);
+      return;
+    }
+    const p = local(e);
+    aim.x = p.x; aim.y = p.y; aim.active = true;
+    useInput(e.pointerType === 'mouse' ? 'mouse' : 'touch');
+    fire(p.x + cam.x, p.y + cam.y);
+  });
+  document.addEventListener('pointerdown', e => {
+    // Remember how the player is about to press "はじめる", so the right view is chosen.
+    if (phase !== 'play' && phase !== 'count' && !e.target.closest?.('canvas')) {
+      if (e.target.closest?.('.go')) useInput(e.pointerType === 'touch' || e.pointerType === 'pen' ? 'touch' : 'mouse');
+    }
+  }, true);
+  document.addEventListener('mousemove', e => {
+    if (!locked() || phase === 'result' || phase === 'idle') return;
+    const k = mouseK();
+    moveCam(e.movementX * k, e.movementY * k);
+  });
+  // Screen pixels the view turns per mouse count.
+  function mouseK() {
+    if (sensMode !== 'apex') return 0.22 + msens * 0.09;
+    // Apex turns 0.022° per count × its sensitivity. Its FOV slider is measured on a 4:3 screen,
+    // so widen it to this stage's shape, then turn degrees into pixels across the stage.
+    return 0.022 * apexSens * pxPerDegree();
+  }
+  // Apex's FOV slider is measured on a 4:3 screen, so widen it to this stage's shape,
+  // then say how many pixels across the stage one degree of turning is.
+  function pxPerDegree(fov = apexFov) {
+    const half43 = Math.tan(fov * Math.PI / 360);
+    const hfov = 2 * Math.atan(half43 * (W / H) / (4 / 3)) * 180 / Math.PI;
+    return W / hfov;
+  }
+  document.addEventListener('pointerlockchange', () => {
+    if (!locked() && view === 'fps' && input === 'mouse' && (phase === 'play' || phase === 'count')) {
+      abort('照準の固定が外れたので、中断しました。もう一度はじめると、続きではなく最初から始まります。');
+    }
+  });
+  document.addEventListener('pointerlockerror', () => {
+    if (lockTry === 1) {   // raw counts not offered here: ask for an ordinary lock instead
+      lockTry = 2;
+      try { const p = cv.requestPointerLock(); if (p && p.catch) p.catch(() => {}); return; } catch {}
+    }
+    if (phase === 'count' && input === 'mouse') { view = 'direct'; clampCam(); updateCursor(); }
+  });
+  document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => selectMode(b.dataset.mode)));
+  document.querySelectorAll('.pick').forEach(b => b.addEventListener('click', () => selectChara(b.dataset.chara)));
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') abort(); });
+
+  // ---------- settings ----------
+  let msens = Number(ls.get('msens')) || 5;
+  $('msens').value = msens; $('msens-out').textContent = msens;
+  $('msens').addEventListener('input', e => { msens = Number(e.target.value); $('msens-out').textContent = msens; ls.set('msens', String(msens)); });
+  let sensMode = ls.get('sensmode') === 'apex' ? 'apex' : 'game';
+  let apexSens = Number(ls.get('apexsens')) || 2;
+  let apexFov = Number(ls.get('apexfov')) || 90;
+  let padMode = ls.get('padmode') === 'yume' ? 'yume' : 'game';
+  function paintSens() {
+    $('sensmode').value = sensMode;
+    $('sens-game').hidden = sensMode !== 'game';
+    $('sens-apex').hidden = sensMode !== 'apex';
+    $('padmode').value = padMode;
+    $('pad-game').hidden = padMode !== 'game';
+    $('fov-ctl').hidden = sensMode !== 'apex';   // the pad preset carries its own FOV (104)
+    $('apexsens').value = apexSens; $('apexfov').value = apexFov;
+  }
+  paintSens();
+  $('sensmode').addEventListener('change', e => { sensMode = e.target.value === 'apex' ? 'apex' : 'game'; ls.set('sensmode', sensMode); paintSens(); });
+  $('padmode').addEventListener('change', e => { padMode = e.target.value === 'yume' ? 'yume' : 'game'; ls.set('padmode', padMode); paintSens(); });
+  $('apexsens').addEventListener('change', e => {
+    const v = Number(e.target.value);
+    apexSens = Number.isFinite(v) ? Math.max(0.1, Math.min(20, v)) : 2;
+    ls.set('apexsens', String(apexSens)); paintSens();
+  });
+  $('apexfov').addEventListener('change', e => {
+    const v = Math.round(Number(e.target.value));
+    apexFov = Number.isFinite(v) ? Math.max(70, Math.min(110, v)) : 90;
+    ls.set('apexfov', String(apexFov)); paintSens();
+  });
+  let sens = Number(ls.get('sens')) || 5;
+  $('sens').value = sens; $('sens-out').textContent = sens;
+  $('sens').addEventListener('input', e => { sens = Number(e.target.value); $('sens-out').textContent = sens; ls.set('sens', String(sens)); });
+  function paintSound() { $('snd').setAttribute('aria-pressed', String(sfx.on)); $('snd').textContent = sfx.on ? '音：オン' : '音：オフ'; }
+  $('vol').value = sfx.volume;
+  paintSound();
+  $('snd').addEventListener('click', () => { sfx.unlock(); sfx.setOn(!sfx.on); paintSound(); if (sfx.on) sfx.tick(); });
+  $('vol').addEventListener('input', e => { sfx.unlock(); sfx.setVolume(Number(e.target.value)); });
+  $('vol').addEventListener('change', () => sfx.hit(0));
+
+  // ---------- gamepad ----------
+  let padIndex = null;
+  const prevBtn = {};
+  function currentPad() {
+    let pads = [];
+    try { pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : []; } catch { pads = []; }
+    if (padIndex !== null && pads[padIndex]) return pads[padIndex];
+    const p = pads.find(Boolean);
+    padIndex = p ? p.index : null;
+    return p || null;
+  }
+  function setPadState(gp) {
+    const el = $('padstate');
+    const on = !!gp;
+    if (el.classList.contains('on') === on) return;
+    el.classList.toggle('on', on);
+    el.textContent = on ? 'パッド：接続中' : 'パッド：未接続';
+  }
+  const axis = v => {
+    const dz = 0.12, a = Math.abs(v);
+    if (a < dz) return 0;
+    const n = (a - dz) / (1 - dz);
+    return Math.sign(v) * n * n;     // gentle near the center, fast at full tilt
+  };
+  // ゆめの Apex の詳細視点操作（ALC）。2026-10-11 の設定画面から。速さは度/秒。
+  const YUME_ALC = {
+    fov: 104, deadzone: .02, outer: .02, curve: 7,
+    hip: { yaw: 160, pitch: 120, extraYaw: 220, extraPitch: 0, ramp: .33, delay: 0 },
+    ads: { yaw: 110, pitch: 75, extraYaw: 30, extraPitch: 30, ramp: 1.0, delay: .25 },
+  };
+  let fullFor = 0;   // how long the stick has been pushed all the way
+  function apexTurn(rx, ry, dt) {
+    const a = YUME_ALC, s = ads ? a.ads : a.hip;
+    const mag = Math.hypot(rx, ry);
+    const m = Math.max(0, Math.min(1, (mag - a.deadzone) / (1 - a.deadzone - a.outer)));
+    if (!m) { fullFor = 0; return null; }
+    // The response curve makes small tilts turn slowly. Apex does not publish its formula;
+    // an exponent of 1 + curve/10 is an approximation.
+    const c = Math.pow(m, 1 + a.curve / 10);
+    fullFor = m >= 0.999 ? fullFor + dt : 0;
+    // At full tilt the extra speed starts after the delay and builds up over the ramp-up time
+    // (the sliders' 100% is taken as 1 second; also an approximation).
+    const e = fullFor > s.delay ? Math.min(1, (fullFor - s.delay) / Math.max(.01, s.ramp)) : 0;
+    const ux = rx / mag, uy = ry / mag, k = pxPerDegree(a.fov) * dt;
+    return { x: ux * (s.yaw * c + s.extraYaw * e) * k, y: uy * (s.pitch * c + s.extraPitch * e) * k };
+  }
+  function switchToPad() {
+    if (input === 'pad') return;
+    useInput('pad');
+    if (phase === 'idle') showIdle();
+    resetHud();
+  }
+  function pollPad(dt) {
+    const gp = currentPad();
+    setPadState(gp);
+    if (!gp) return;
+    const ax = gp.axes || [];
+    const down = i => !!(gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5));
+    const live = (phase === 'play' || phase === 'count') && view === 'fps';
+    ads = live && down(6);   // LT held: aiming down sights
+    if (padMode === 'yume') {
+      // Apex looks with the right stick only.
+      const turn = apexTurn(ax[2] || 0, ax[3] || 0, dt);
+      if (turn) { switchToPad(); if (live) moveCam(turn.x, turn.y); }
+    } else {
+      let x = axis(ax[2] || 0), y = axis(ax[3] || 0);
+      const lx = axis(ax[0] || 0), ly = axis(ax[1] || 0);
+      if (Math.hypot(lx, ly) > Math.hypot(x, y)) { x = lx; y = ly; }   // either stick turns the view
+      if (x || y) {
+        switchToPad();
+        if (live) {
+          const speed = Math.min(W, H) * (0.35 + sens * 0.2) * (ads ? 0.6 : 1);
+          moveCam(x * speed * dt, y * speed * dt);
+        }
+      }
+    }
+    const pressed = i => { const d = down(i); const was = prevBtn[i]; prevBtn[i] = d; return d && !was; };
+    const fireBtn = pressed(7) | pressed(0);
+    const lb = pressed(4), rb = pressed(5), yb = pressed(3), st = pressed(9);
+    if (fireBtn || lb || rb || yb || st) switchToPad();
+    if (phase === 'play') {
+      if (fireBtn && view === 'fps') { const a = aimWorld(); fire(a.x, a.y); }
+      if (st) abort();
+    } else if (phase === 'idle' || phase === 'result') {
+      if (fireBtn) start();
+      if (lb || rb) {
+        const i = MODE_ORDER.indexOf(mode);
+        const n = MODE_ORDER.length;
+        selectMode(MODE_ORDER[(i + (rb ? 1 : n - 1)) % n]);
+      }
+      if (yb) selectChara(chara === 'yume' ? 'luna' : 'yume');
+    }
+  }
+
+  // ---------- drawing ----------
+  function drawSky(now) {
+    ctx.fillStyle = '#070818';
+    ctx.fillRect(0, 0, W, H);
+    // A faint band of the milky way that moves with the view, so turning feels like turning.
+    const by = H * 1.1 - cam.y * .5;
+    const grd = ctx.createRadialGradient(W * .5 - cam.x * .3 + WW * .1, by, 0, W * .5 - cam.x * .3 + WW * .1, by, H * 1.2);
+    grd.addColorStop(0, 'rgba(70, 60, 150, .3)');
+    grd.addColorStop(1, 'rgba(7, 8, 24, 0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+    const fw = view === 'fps' ? WW : W, fh = view === 'fps' ? WH : H;
+    for (const s of sky) {
+      const x = s.x * fw - cam.x * s.d, y = s.y * fh - cam.y * s.d;
+      if (x < -2 || y < -2 || x > W + 2 || y > H + 2) continue;
+      const a = reduce ? .6 : .35 + .35 * Math.sin(now / 1000 * s.s + s.p);
+      ctx.fillStyle = `rgba(220, 225, 255, ${a})`;
+      ctx.beginPath(); ctx.arc(x, y, s.r, 0, 6.283); ctx.fill();
+    }
+  }
+
+  function sparkle(x, y, r, core, glow, scale = 1) {
+    const rr = r * scale;
+    const gl = ctx.createRadialGradient(x, y, 0, x, y, rr * 1.9);
+    gl.addColorStop(0, glow);
+    gl.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(x, y, rr * 1.9, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = core; ctx.globalAlpha = .55; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.283); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = core;
+    ctx.beginPath();
+    const k = rr * .22;
+    ctx.moveTo(x, y - rr * .9); ctx.quadraticCurveTo(x + k * .3, y - k * .3, x + rr * .9, y);
+    ctx.quadraticCurveTo(x + k * .3, y + k * .3, x, y + rr * .9);
+    ctx.quadraticCurveTo(x - k * .3, y + k * .3, x - rr * .9, y);
+    ctx.quadraticCurveTo(x - k * .3, y - k * .3, x, y - rr * .9);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(x, y, rr * .14, 0, 6.283); ctx.fill();
+  }
+
+  function drawMoon(x, y, on) {
+    const r = R * 1.45;
+    const gl = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4);
+    gl.addColorStop(0, on ? 'rgba(159, 232, 255, .55)' : 'rgba(159, 232, 255, .2)');
+    gl.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, 6.283); ctx.fill();
+    ctx.fillStyle = on ? '#dff8ff' : '#9fd9ee';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
+    ctx.fillStyle = 'rgba(80, 120, 160, .25)';
+    ctx.beginPath(); ctx.arc(x - r * .3, y - r * .2, r * .22, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r * .28, y + r * .3, r * .14, 0, 6.283); ctx.fill();
+  }
+
+  // A small arrow at the edge of the screen pointing at a target that is out of view.
+  function edgeArrow(wx, wy, color) {
+    const sx = wx - cam.x, sy = wy - cam.y, m = 22;
+    if (sx > -R && sx < W + R && sy > -R && sy < H + R) return;
+    const cx = W / 2, cy = H / 2, dx = sx - cx, dy = sy - cy;
+    const t = Math.min((W / 2 - m) / Math.abs(dx || 1e-6), (H / 2 - m) / Math.abs(dy || 1e-6));
+    const x = cx + dx * t, y = cy + dy * t, a = Math.atan2(dy, dx);
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(a);
+    ctx.globalAlpha = .85;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-6, -7); ctx.lineTo(-3, 0); ctx.lineTo(-6, 7); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPartner(dt) {
+    if (!cb) return;
+    const c = CHARA[chara];
+    ctx.drawImage(c.img, cb.x, cb.y, cb.w, cb.h);
+    flash = Math.max(0, flash - dt * 5);
+    const r = cb.w * (0.09 + 0.06 * flash);
+    const gl = ctx.createRadialGradient(cb.ox, cb.oy, 0, cb.ox, cb.oy, r);
+    gl.addColorStop(0, c.glow);
+    gl.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = .45 + .55 * flash;
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(cb.ox, cb.oy, r, 0, 6.283); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawShots(now) {
+    const c = CHARA[chara];
+    for (const s of g.shots) {
+      const t = Math.min(1, (now - s.t0) / s.dur);
+      const ex = s.wx - cam.x, ey = s.wy - cam.y;
+      const r = R * (s.small ? .22 : .36) * (1 - .35 * t);
+      for (let k = 4; k >= 0; k--) {
+        const tt = Math.max(0, t - k * 0.07);
+        const x = s.sx + (ex - s.sx) * tt, y = s.sy + (ey - s.sy) * tt;
+        const rr = r * (1 - k * .16);
+        if (k === 0) {
+          const gl = ctx.createRadialGradient(x, y, 0, x, y, rr * 2.2);
+          gl.addColorStop(0, c.core);
+          gl.addColorStop(.45, c.glow);
+          gl.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gl;
+          ctx.beginPath(); ctx.arc(x, y, rr * 2.2, 0, 6.283); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(x, y, rr * .55, 0, 6.283); ctx.fill();
+        } else {
+          ctx.globalAlpha = .35 * (1 - k / 5);
+          ctx.fillStyle = c.spark;
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.283); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+      if (t >= 1 && !s.done) { s.done = true; s.onLand && s.onLand(); }
+    }
+    g.shots = g.shots.filter(s => !s.done);
+  }
+
+  function drawCrosshair(now) {
+    const fps = view === 'fps';
+    const x = fps ? W / 2 : aim.x, y = fps ? H / 2 : aim.y;
+    ctx.save();
+    if (fps && ads) {
+      // Aiming down sights: the edges of the sky darken and the crosshair tightens.
+      const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .3, W / 2, H / 2, Math.max(W, H) * .75);
+      vg.addColorStop(0, 'rgba(4, 4, 14, 0)');
+      vg.addColorStop(1, 'rgba(4, 4, 14, .55)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (fps) {
+      const gap = (ads ? 3 : 5) + spread * (ads ? 3 : 5), len = ads ? 6 : 8;
+      ctx.lineCap = 'round';
+      for (const [lw, col] of [[4, 'rgba(7, 8, 24, .7)'], [2, '#ffffff']]) {
+        ctx.strokeStyle = col; ctx.lineWidth = lw;
+        ctx.beginPath();
+        ctx.moveTo(x - gap - len, y); ctx.lineTo(x - gap, y);
+        ctx.moveTo(x + gap, y); ctx.lineTo(x + gap + len, y);
+        ctx.moveTo(x, y - gap - len); ctx.lineTo(x, y - gap);
+        ctx.moveTo(x, y + gap); ctx.lineTo(x, y + gap + len);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ffd36e';
+      ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 6.283); ctx.fill();
+    }
+    // Hit marker: a gold cross that flashes on the crosshair when a shot connects.
+    if (g && g.hm && now - g.hm.t < 180) {
+      const a = 1 - (now - g.hm.t) / 180, hx = fps ? x : g.hm.x - cam.x, hy = fps ? y : g.hm.y - cam.y;
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = '#ffd36e'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      const i = 7, o = 15;
+      ctx.beginPath();
+      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { ctx.moveTo(hx + sx * i, hy + sy * i); ctx.lineTo(hx + sx * o, hy + sy * o); }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // A combo counter under the crosshair from the third hit in a row.
+    if (g && g.combo >= 3 && now - g.comboAt < 1200) {
+      ctx.globalAlpha = 1 - Math.max(0, (now - g.comboAt - 700) / 500);
+      drawText('×' + g.combo, fps ? y + 34 : Math.min(H - 20, aim.y + 34), 16, '#ffd36e', fps ? x : aim.x);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  function drawText(text, y, size, color, x = W / 2) {
+    ctx.fillStyle = color;
+    ctx.font = `${size}px "DotGothic16", monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+  }
+
+  // ---------- loop ----------
+  let last = performance.now();
+  let hudTick = 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000);
+    last = now;
+    pollPad(dt);
+    spread = Math.max(0, spread - dt * 7);
+    sway.x *= Math.pow(0.0005, dt); sway.y *= Math.pow(0.0005, dt);   // spring back to the middle
+    sway.kick = Math.max(0, sway.kick - dt * 7);
+    if (W && H) {
+      drawSky(now);
+      cb = charBox(now);
+      drawPartner(dt);
+
+      if (phase === 'count') {
+        const left = countEnd - now;
+        if (left <= 0) begin(now);
+        else {
+          const n = Math.ceil(left / 1000);
+          if (n !== lastTick) { lastTick = n; sfx.tick(); }
+          const f = (left % 1000) / 1000;
+          ctx.globalAlpha = .4 + .6 * f;
+          drawText(String(n), H * .3, Math.min(W, H) * (.2 + .05 * f), '#ffd36e');
+          ctx.globalAlpha = 1;
+          drawText(MODES[mode].name, H * .3 + Math.min(W, H) * .16, 16, '#9b97c6');
+          if (view === 'fps' && input === 'mouse' && !locked() && now - countStart > 400) {
+            drawText('画面をクリックすると、照準が固定されます', H * .3 + Math.min(W, H) * .16 + 26, 13, '#c49bff');
+          }
+          drawCrosshair(now);
+        }
+      }
+
+      if (phase === 'play') {
+        const el = (now - g.t0) / 1000;
+        if (mode === 'flick') {
+          for (const t of g.targets) {
+            const pop = Math.min(1, (now - t.born) / 120);
+            sparkle(t.x - cam.x, t.y - cam.y, R, '#ffd36e', 'rgba(255, 211, 110, .35)', .6 + .4 * pop);
+          }
+        }
+        if (mode === 'track') {
+          const o = g.orb;
+          if (now > o.turn) {
+            const a = rand(0, Math.PI * 2), s = o.sp * rand(.55, 1.25);
+            o.tx = Math.cos(a) * s; o.ty = Math.sin(a) * s;
+            o.turn = now + rand(450, 1400);
+          }
+          const k = Math.min(1, dt * 3);
+          o.vx += (o.tx - o.vx) * k; o.vy += (o.ty - o.vy) * k;
+          o.x += o.vx * dt; o.y += o.vy * dt;
+          const m = R * 1.45 + 6;
+          const bx0 = view === 'fps' ? W / 2 : m, bx1 = view === 'fps' ? WW - W / 2 : W - m;
+          const by0 = view === 'fps' ? H / 2 : m;
+          const by1 = view === 'fps' ? WH - H / 2 : (cb ? Math.min(H - m, cb.y) : H - m);   // the moon stays above the partner
+          if (o.x < bx0) { o.x = bx0; o.vx = Math.abs(o.vx); o.tx = Math.abs(o.tx); }
+          if (o.x > bx1) { o.x = bx1; o.vx = -Math.abs(o.vx); o.tx = -Math.abs(o.tx); }
+          if (o.y < by0) { o.y = by0; o.vy = Math.abs(o.vy); o.ty = Math.abs(o.ty); }
+          if (o.y > by1) { o.y = by1; o.vy = -Math.abs(o.vy); o.ty = -Math.abs(o.ty); }
+          const a = aimWorld();
+          const on = a.active && dist(a.x, a.y, o.x, o.y) <= R * 1.45;
+          g.total += dt; if (on) g.on += dt;
+          g.nowOn = on;
+          sfx.hum(on);
+          drawMoon(o.x - cam.x, o.y - cam.y, on);
+          if (on && now > g.stream) {
+            g.stream = now + 110;
+            shoot(o.x, o.y, now, () => burst(o.x, o.y, '#c8f4ff', 4), true);
+          }
+        }
+        if (mode === 'react') {
+          if (!g.shown && now >= g.wait) g.shown = { ...spot(R, [], true), t: now };
+          if (g.shown) sparkle(g.shown.x - cam.x, g.shown.y - cam.y, R, '#ffd36e', 'rgba(255, 211, 110, .45)', 1);
+          if (g.msg && now < g.msg.until) drawText(g.msg.text, H * .12, 18, g.msg.text.endsWith('ms') ? '#9fe8ff' : '#c49bff');
+        }
+        if (mode === 'const') {
+          if (g.pending && now >= g.pending) { g.pending = 0; placeConstellation(now); }
+          const c = g.con, r = CR();
+          // Faint guide lines for the whole shape; gold once both ends are lit.
+          ctx.lineCap = 'round';
+          for (const [a, b] of c.def.edges) {
+            const A = c.stars[a], B = c.stars[b], both = A.lit && B.lit;
+            ctx.strokeStyle = both ? 'rgba(255, 211, 110, .85)' : 'rgba(220, 225, 255, .14)';
+            ctx.lineWidth = both ? 2 : 1;
+            ctx.beginPath(); ctx.moveTo(A.x - cam.x, A.y - cam.y); ctx.lineTo(B.x - cam.x, B.y - cam.y); ctx.stroke();
+          }
+          const nextStar = g.pending ? null : c.stars[c.def.order[c.next]];
+          for (const s of c.stars) {
+            const x = s.x - cam.x, y = s.y - cam.y;
+            if (s === nextStar) {
+              const pulse = reduce ? .5 : (Math.sin(now / 160) + 1) / 2;
+              ctx.strokeStyle = `rgba(255, 211, 110, ${.3 + .4 * pulse})`; ctx.lineWidth = 1.5;
+              ctx.beginPath(); ctx.arc(x, y, r * (1.5 + .35 * pulse), 0, 6.283); ctx.stroke();
+              sparkle(x, y, r, '#ffd36e', 'rgba(255, 211, 110, .45)', 1);
+            } else if (s.lit) {
+              sparkle(x, y, r, '#fff2c8', 'rgba(255, 211, 110, .3)', .55);
+            } else {
+              ctx.fillStyle = 'rgba(220, 225, 255, .6)';
+              ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 6.283); ctx.fill();
+            }
+          }
+          if (g.msg && now < g.msg.until) {
+            ctx.globalAlpha = Math.min(1, (g.msg.until - now) / 400);
+            drawText(g.msg.text, g.msg.wy - cam.y, 22, '#ffd36e', g.msg.wx - cam.x);
+            ctx.globalAlpha = 1;
+          }
+        }
+        for (const o of g.ghosts) sparkle(o.x - cam.x, o.y - cam.y, mode === 'const' ? CR() : R, '#fff2c8', 'rgba(255, 211, 110, .55)', 1.05);
+
+        drawShots(now);
+        for (const p of g.parts) {
+          p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .92; p.vy *= .92; p.life -= dt * 2.2;
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x - cam.x, p.y - cam.y, 2.2, 0, 6.283); ctx.fill();
+        }
+        g.parts = g.parts.filter(p => p.life > 0);
+        for (const mk of g.marks) {
+          mk.life -= dt * 2;
+          ctx.globalAlpha = Math.max(0, mk.life) * .7;
+          ctx.strokeStyle = '#c49bff'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(mk.x - cam.x, mk.y - cam.y, 6 + (1 - mk.life) * 8, 0, 6.283); ctx.stroke();
+        }
+        g.marks = g.marks.filter(m => m.life > 0);
+        ctx.globalAlpha = 1;
+        if (view === 'fps') {
+          if (mode === 'flick') for (const t of g.targets) edgeArrow(t.x, t.y, '#ffd36e');
+          if (mode === 'track') edgeArrow(g.orb.x, g.orb.y, '#9fe8ff');
+          if (mode === 'const' && g.con && !g.pending) { const s = g.con.stars[g.con.def.order[g.con.next]]; edgeArrow(s.x, s.y, '#ffd36e'); }
+        }
+        drawCrosshair(now);
+        if (view === 'fps' && input === 'mouse') drawText(locked() ? 'Esc：中断' : 'クリックで照準を固定', 18, 11, 'rgba(155, 151, 198, .8)', 52);
+
+        if ((mode !== 'react' && el >= MODES[mode].time) || (mode === 'react' && g.round >= MODES.react.rounds)) finish();
+        else if (now - hudTick > 80) {
+          hudTick = now;
+          if (mode === 'flick') {
+            const shots = g.hits + g.misses;
+            $('hud-left').textContent = Math.max(0, MODES.flick.time - el).toFixed(1);
+            $('hud-score').textContent = g.hits;
+            $('hud-acc').textContent = shots ? Math.round(g.hits / shots * 100) + '%' : '–';
+          }
+          if (mode === 'track') {
+            $('hud-left').textContent = Math.max(0, MODES.track.time - el).toFixed(1);
+            $('hud-score').textContent = (g.total ? Math.round(g.on / g.total * 100) : 0) + '%';
+            $('hud-acc').textContent = g.nowOn ? '重なり中' : '–';
+          }
+          if (mode === 'const') {
+            $('hud-left').textContent = Math.max(0, MODES.const.time - el).toFixed(1);
+            $('hud-score').textContent = g.lit;
+            $('hud-acc').textContent = g.done.length;
+          }
+          if (mode === 'react') {
+            $('hud-left').textContent = (MODES.react.rounds - g.round) + '回';
+            $('hud-score').textContent = g.times.length ? Math.round(g.times.reduce((a, b) => a + b, 0) / g.times.length) + 'ms' : '–';
+          }
+        }
+      }
+
+      if (phase === 'idle' || phase === 'result') {
+        // A quiet preview so the stage never looks empty behind the card.
+        const t = now / 1000;
+        sparkle(W * .2, H * .25, R, '#ffd36e', 'rgba(255, 211, 110, .3)', reduce ? 1 : .92 + .08 * Math.sin(t * 2));
+        sparkle(W * .8, H * .22, R * .8, '#ffd36e', 'rgba(255, 211, 110, .25)', reduce ? 1 : .92 + .08 * Math.sin(t * 2 + 1));
+        sparkle(W * .68, H * .5, R * .9, '#ffd36e', 'rgba(255, 211, 110, .25)', reduce ? 1 : .92 + .08 * Math.sin(t * 2 + 2));
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- 練習の記録 (one line: the best of each day played) ----------
+  let logInput = input;
+  const chartEl = $('chart');
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const svgEl = (tag, attrs) => { const el = document.createElementNS(SVGNS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); return el; };
+  const shortDate = d => { const [, m, day] = d.split('-'); return Number(m) + '/' + Number(day); };
+
+  function renderLog() {
+    $('log-mode').textContent = MODES[mode].name;
+    document.querySelectorAll('.logtab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.input === logInput)));
+    const days = myDays(mode, logInput);
+    const pts = Object.keys(days).sort().slice(-30).map(d => ({ d, v: Number(days[d]) })).filter(p => Number.isFinite(p.v));
+    const list = $('log-list');
+    list.textContent = '';
+    for (const p of pts.slice().reverse()) {
+      const li = document.createElement('li');
+      const a = document.createElement('span'); a.textContent = p.d;
+      const b = document.createElement('span'); b.textContent = fmt(mode, p.v);
+      li.append(a, b); list.append(li);
+    }
+    $('log-table').hidden = !pts.length;
+    chartEl.textContent = '';
+    const note = $('log-note');
+    if (pts.length < 2) {
+      const p = document.createElement('p');
+      p.className = 'chart-empty';
+      p.textContent = pts.length
+        ? `${shortDate(pts[0].d)} に ${fmt(mode, pts[0].v)}。ちがう日にもう一度遊ぶと、線になります。`
+        : `${INPUT_NAME[logInput]}で${MODES[mode].name}を遊ぶと、その日のベストがここに残ります。`;
+      chartEl.append(p);
+      note.textContent = '遊んだ日ごとのベストが、ここに線で並びます。記録はこのブラウザにだけ残ります。';
+      return;
+    }
+    const first = pts[0], lastP = pts[pts.length - 1];
+    const up = better[mode](lastP.v, first.v);
+    note.textContent = `はじめの日 ${fmt(mode, first.v)} → いちばん最近 ${fmt(mode, lastP.v)}。` +
+      (up ? '少しずつ伸びています。' : '日によって揺れるのは、ふつうのことです。') +
+      (mode === 'react' ? '（反応速度は、線が上にあるほど速い）' : '');
+
+    const w = Math.max(240, chartEl.clientWidth), h = 200;
+    const pad = { l: 44, r: 18, t: 22, b: 26 };
+    const vals = pts.map(p => p.v);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (lo === hi) { lo -= 1; hi += 1; }
+    const span = hi - lo; lo -= span * .12; hi += span * .12;
+    const inv = mode === 'react';   // faster (smaller) is better, so it goes up
+    const x = i => pad.l + (w - pad.l - pad.r) * (pts.length === 1 ? .5 : i / (pts.length - 1));
+    const y = v => { const t = (v - lo) / (hi - lo); return pad.t + (h - pad.t - pad.b) * (inv ? t : 1 - t); };
+    const svg = svgEl('svg', { viewBox: `0 0 ${w} ${h}`, role: 'img', 'aria-label': `${MODES[mode].name}の日ごとのベスト（${INPUT_NAME[logInput]}）` });
+    // A recessive grid with three values.
+    for (let k = 0; k < 3; k++) {
+      const v = lo + (hi - lo) * (.15 + .35 * k);
+      const yy = y(v);
+      svg.append(svgEl('line', { x1: pad.l, x2: w - pad.r, y1: yy, y2: yy, stroke: 'var(--line)', 'stroke-width': 1 }));
+      const t = svgEl('text', { x: pad.l - 8, y: yy + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--pixel)' });
+      t.textContent = Math.round(v); svg.append(t);
+    }
+    for (const [i, anchor] of [[0, 'start'], [pts.length - 1, 'end']]) {
+      const t = svgEl('text', { x: x(i), y: h - 6, 'text-anchor': anchor, fill: 'var(--muted)', 'font-size': 11, 'font-family': 'var(--pixel)' });
+      t.textContent = shortDate(pts[i].d); svg.append(t);
+    }
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+    svg.append(svgEl('path', { d, fill: 'none', stroke: 'var(--star)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    pts.forEach((p, i) => svg.append(svgEl('circle', { cx: x(i), cy: y(p.v), r: i === pts.length - 1 ? 5 : 4, fill: 'var(--star)', stroke: 'var(--panel)', 'stroke-width': 2 })));
+    const lastLabel = svgEl('text', { x: x(pts.length - 1), y: y(lastP.v) - 12, 'text-anchor': 'end', fill: 'var(--fg)', 'font-size': 12, 'font-family': 'var(--pixel)' });
+    lastLabel.textContent = fmt(mode, lastP.v); svg.append(lastLabel);
+    // Hover / touch: the nearest day's value.
+    const cross = svgEl('line', { y1: pad.t, y2: h - pad.b, stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' });
+    svg.append(cross);
+    const hit = svgEl('rect', { x: pad.l - 10, y: 0, width: w - pad.l - pad.r + 20, height: h, fill: 'transparent' });
+    svg.append(hit);
+    chartEl.append(svg);
+    const tip = document.createElement('div');
+    tip.className = 'tip'; tip.hidden = true;
+    chartEl.append(tip);
+    const show = e => {
+      const r = svg.getBoundingClientRect();
+      const mx = (e.clientX - r.left) * (w / r.width);
+      let best = 0;
+      pts.forEach((p, i) => { if (Math.abs(x(i) - mx) < Math.abs(x(best) - mx)) best = i; });
+      const px = x(best), py = y(pts[best].v);
+      cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('visibility', 'visible');
+      tip.textContent = `${shortDate(pts[best].d)}　${fmt(mode, pts[best].v)}`;
+      tip.style.left = (px * r.width / w) + 'px';
+      tip.style.top = (py * r.height / h) + 'px';
+      tip.hidden = false;
+    };
+    const hide = () => { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); };
+    hit.addEventListener('pointermove', show);
+    hit.addEventListener('pointerdown', show);
+    hit.addEventListener('pointerleave', hide);
+  }
+  document.querySelectorAll('.logtab').forEach(t => t.addEventListener('click', () => { logInput = t.dataset.input; renderLog(); }));
+  let logW = 0;
+  new ResizeObserver(() => { const nw = chartEl.clientWidth; if (Math.abs(nw - logW) > 4) { logW = nw; renderLog(); } }).observe(chartEl);
+
+  // ---------- ranking ----------
+  // 記録は Cloudflare のランキング窓口（articles リポジトリの dev/apps/hoshiakari-ranking）に送る。
+  // 窓口に届かないときは、このブラウザでの自分の記録トップ10を出す。
+  const RANK_API = 'https://hoshiakari-ranking.pages.dev/api/scores';
+  const VALID = {
+    flick: v => Number.isInteger(v) && v >= 0 && v <= 150,
+    track: v => Number.isInteger(v) && v >= 0 && v <= 100,
+    react: v => Number.isInteger(v) && v >= 100 && v <= 3000,
+    const: v => Number.isInteger(v) && v >= 0 && v <= 150,
+  };
+  const ERR = {
+    name_ng: 'その名前は使えません。ちがう名前にしてください',
+    name_long: '12文字までにしてください',
+    name_empty: '1文字以上入れてください',
+    slow_down: '少し時間をおいてから、もう一度どうぞ',
+    forbidden: 'このブラウザの記録と名前が合いませんでした',
+    offline: 'ランキングにつながりませんでした。記録はこのブラウザに残っています',
+  };
+  const ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
+  const randId = () => {
+    const a = new Uint8Array(24);
+    crypto.getRandomValues(a);
+    return Array.from(a, b => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'[b & 63]).join('');
+  };
+  // pid はランキングで「あなた」を見分ける番号、secret は本人だけが持つ合言葉。どちらもこのブラウザにだけ残る。
+  let pid = ls.get('pid'), secret = ls.get('secret');
+  if (!ID_RE.test(pid || '') || !ID_RE.test(secret || '')) { pid = randId(); secret = randId(); ls.set('pid', pid); ls.set('secret', secret); }
+
+  let boardInput = input;
+  let myName = (ls.get('nick') || '').slice(0, 12);
+  $('nick').value = myName;
+  let remote = { key: null, rows: null, mine: null, state: 'loading' };   // state: loading | ok | offline
+  let fetchSeq = 0;
+
+  async function loadBoard() {
+    const key = bestKey(mode, boardInput), seq = ++fetchSeq;
+    const same = remote.key === key && remote.rows;
+    remote = { key, rows: same ? remote.rows : null, mine: same ? remote.mine : null, state: same ? 'ok' : 'loading' };
+    renderBoard();
+    try {
+      const r = await fetch(`${RANK_API}?mode=${mode}&input=${boardInput}&pid=${encodeURIComponent(pid)}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error(String(r.status));
+      const b = await r.json();
+      if (seq !== fetchSeq) return;
+      remote = { key, rows: Array.isArray(b.rows) ? b.rows : [], mine: b.mine || null, state: 'ok' };
+    } catch {
+      if (seq !== fetchSeq) return;
+      remote = { key, rows: null, mine: null, state: 'offline' };
+    }
+    renderBoard();
+  }
+
+  function allBests() {
+    const out = [];
+    for (const m of MODE_ORDER) for (const i of Object.keys(INPUT_NAME)) {
+      const v = myBest(m, i);
+      if (v !== null && VALID[m](v)) out.push({ mode: m, input: i, value: v });
+    }
+    return out;
+  }
+
+  let sending = Promise.resolve();
+  function send() {
+    if (!myName) return Promise.resolve(null);
+    const body = JSON.stringify({ pid, secret, name: myName, scores: allBests() });
+    sending = sending.then(async () => {
+      try {
+        const r = await fetch(RANK_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+        const b = await r.json().catch(() => ({}));
+        return r.ok ? { ok: true } : { ok: false, error: b.error || 'offline' };
+      } catch { return { ok: false, error: 'offline' }; }
+    });
+    return sending;
+  }
+
+  // 自己ベストは窓口側で「良いときだけ上書き」されるので、毎回まとめて送ってよい
+  function pushScores() {
+    send().then(res => {
+      if (res && !res.ok) {
+        $('nick-msg').textContent = ERR[res.error] || ERR.offline;
+        if (res.error && res.error.startsWith('name_')) { myName = ''; ls.set('nick', ''); }
+      }
+      loadBoard();
+    });
+  }
+
+  function cleanName(s) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, 12); }
+
+  function renderBoard() {
+    const k = bestKey(mode, boardInput);
+    if (remote.key !== k) { loadBoard(); return; }
+    $('board-mode').textContent = MODES[mode].name;
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.input === boardInput)));
+    const online = remote.state === 'ok';
+    $('board-title').firstChild.textContent = remote.state === 'offline' ? '自分の記録' : 'ランキング';
+
+    let rows = [];
+    if (online) rows = remote.rows.map(r => ({ name: cleanName(r.name) || 'ななしの星', v: r.value, me: !!r.me }));
+    else if (remote.state === 'offline') rows = myHistory(mode, boardInput).map(v => ({ name: myName || 'あなた', v, me: false }));
+
+    const list = $('ranks');
+    list.textContent = '';
+    const addRow = (rank, r) => {
+      const li = document.createElement('li');
+      if (r.me) li.classList.add('me');
+      const no = document.createElement('span'); no.className = 'no'; no.textContent = rank + '位';
+      const who = document.createElement('span'); who.className = 'who'; who.textContent = r.name;
+      if (r.me) { const s = document.createElement('small'); s.textContent = 'あなた'; who.append(s); }
+      const val = document.createElement('span'); val.className = 'val'; val.textContent = fmt(mode, r.v);
+      li.append(no, who, val);
+      list.append(li);
+    };
+    if (!rows.length && remote.state !== 'loading') {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = online ? `${INPUT_NAME[boardInput]}の記録は、まだだれもいません。最初の星になってみませんか。`
+        : `${INPUT_NAME[boardInput]}の記録は、まだありません。`;
+      list.append(li);
+    }
+    rows.forEach((r, n) => addRow(n + 1, r));
+    if (online && remote.mine) addRow(remote.mine.rank, { name: myName || 'あなた', v: remote.mine.value, me: true });
+
+    const note = $('board-note');
+    if (remote.state === 'loading') note.textContent = 'ランキングを読みこんでいます。';
+    else if (remote.state === 'offline') note.textContent = 'ランキングにつながらないので、このブラウザでの自分の記録を出しています。';
+    else note.textContent = myName
+      ? 'ベスト記録は自動でランキングに載ります。モードと操作方法ごとに並びます。'
+      : 'ニックネームを入れると、あなたのベスト記録がランキングに載ります。';
+    $('nick-form').hidden = false;
+  }
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { boardInput = t.dataset.input; renderBoard(); }));
+  $('nick-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = cleanName($('nick').value);
+    if (!v) { $('nick-msg').textContent = ERR.name_empty; return; }
+    myName = v; ls.set('nick', v); $('nick').value = v;
+    $('nick-msg').textContent = '保存しました';
+    pushScores();
+  });
+
+  resize();
+  selectChara(chara);
+  selectMode('flick');
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
