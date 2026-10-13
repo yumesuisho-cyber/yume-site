@@ -236,10 +236,22 @@ canvas.fpsmode { cursor: none; }
   border-right-color: var(--fg);
 }
 @media (max-width: 640px) {
-  .scene { flex-direction: column; align-items: center; justify-content: center; }
-  .scene .luna { height: 26%; max-width: 60%; }
+  /* Phones: everything has to fit in a narrow stage. The card scrolls inside the stage if it
+     still does not fit, and margin:auto keeps it centered without cutting off the top. */
+  .stage { aspect-ratio: 2 / 3; }
+  .overlay { display: flex; flex-direction: column; padding: 12px; overflow-y: auto; touch-action: pan-y; }
+  .scene { flex-direction: column; align-items: center; justify-content: center; height: auto; margin: auto; gap: 6px; }
+  .scene .luna { height: 104px; max-height: none; max-width: none; }
+  .card { gap: 8px; }
+  .card h2 { font-size: 19px; }
+  .card p { font-size: 13px; line-height: 1.6; }
+  .bubble { font-size: 13px; padding: 6px 12px; }
+  .result-big { font-size: 40px; }
+  .go { padding: 9px 24px; }
   .bubble::before { left: 50%; top: -7px; margin: 0 0 0 -7px; border: 7px solid transparent; border-top: 0; border-bottom-color: var(--fg); }
 }
+/* Touch screens without a mouse: hide the mouse and pad settings. */
+@media (hover: none) and (pointer: coarse) { .desk-only { display: none !important; } }
 .result-big {
   font-family: var(--pixel);
   font-size: clamp(40px, 9vw, 64px);
@@ -410,7 +422,7 @@ footer { font-size: 12px; color: var(--muted); }
       <label for="vol">音量</label>
       <input type="range" id="vol" min="0" max="10" step="1" value="6">
     </div>
-    <div class="ctl">
+    <div class="ctl desk-only">
       <label for="sensmode">マウス感度</label>
       <select id="sensmode">
         <option value="game">このゲームの感度</option>
@@ -425,7 +437,7 @@ footer { font-size: 12px; color: var(--muted); }
         <input type="number" id="apexsens" min="0.1" max="20" step="0.1" value="2">
       </span>
     </div>
-    <div class="ctl">
+    <div class="ctl desk-only">
       <span class="padstate" id="padstate">パッド：未接続</span>
       <label for="padmode">パッド感度</label>
       <select id="padmode">
@@ -437,7 +449,7 @@ footer { font-size: 12px; color: var(--muted); }
         <output id="sens-out" for="sens">5</output>
       </span>
     </div>
-    <div class="ctl" id="fov-ctl" hidden>
+    <div class="ctl desk-only" id="fov-ctl" hidden>
       <label for="apexfov">Apex の FOV</label>
       <input type="number" id="apexfov" min="70" max="110" step="1" value="90">
     </div>
@@ -562,7 +574,8 @@ footer { font-size: 12px; color: var(--muted); }
   const sway = { x: 0, y: 0, kick: 0 };          // the partner lags behind turns and kicks on each shot
   let spread = 0;                                // crosshair opens a little after each shot
   let ads = false;                               // pad LT held: aiming down sights
-  let input = 'mouse';
+  // Phones and tablets start as touch, so the hints, ranking and chart open on the right tab.
+  let input = matchMedia('(hover: none) and (pointer: coarse)').matches ? 'touch' : 'mouse';
   let idleNote = '';
 
   // ---------- small storage helpers (per viewer, optional) ----------
@@ -814,9 +827,12 @@ footer { font-size: 12px; color: var(--muted); }
   }
 
   function showIdle() {
+    const touch = input === 'touch';
     const how = {
-      flick: '照準を星に重ねて撃ち抜きましょう。画面の外の星は、ふちの矢印が教えてくれます。外した玉は命中率に入ります。',
-      track: '動く月に照準を重ねたままにします。重なっている間、玉が自動で飛んで、月がやさしく鳴ります。',
+      flick: touch ? '灯った星を指でタップして、撃ち抜きましょう。外した玉は命中率に入ります。'
+        : '照準を星に重ねて撃ち抜きましょう。画面の外の星は、ふちの矢印が教えてくれます。外した玉は命中率に入ります。',
+      track: touch ? '動く月に指を重ねたまま、追いかけます。重なっている間、玉が自動で飛んで、月がやさしく鳴ります。'
+        : '動く月に照準を重ねたままにします。重なっている間、玉が自動で飛んで、月がやさしく鳴ります。',
       react: '空が静かになったら待って、星が灯った瞬間に撃ちます。灯る前に撃つとやり直しです。星が出るときは音が鳴りません。',
       const: '光っている星を順番に撃つと、線がつながって星座が完成します。星は小さめです。形はゲーム用に少し整えています。',
     }[mode];
