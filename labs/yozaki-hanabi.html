@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>夜咲き花火｜ゆめとルナの45秒ゲーム</title>
+<meta name="description" content="夜空にのぼる光をタップして、花火を咲かせる45秒のゲーム。近くの光を巻きこむと連鎖して、ゆめとルナが盛り上げてくれます。スマホでそのまま遊べます。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yumesuisho-cyber.github.io/yume-site/labs/yozaki-hanabi.html">
+<meta property="og:title" content="夜咲き花火｜ゆめとルナの45秒ゲーム">
+<meta property="og:description" content="夜空にのぼる光をタップして、花火を咲かせる45秒のゲーム。近くの光を巻きこむと連鎖して、ゆめとルナが盛り上げてくれます。スマホでそのまま遊べます。">
+<meta property="og:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/yozaki-hanabi-ogp.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="夜咲き花火｜ゆめとルナの45秒ゲーム">
+<meta name="twitter:description" content="夜空にのぼる光をタップして、花火を咲かせる45秒のゲーム。近くの光を巻きこむと連鎖して、ゆめとルナが盛り上げてくれます。スマホでそのまま遊べます。">
+<meta name="twitter:image" content="https://yumesuisho-cyber.github.io/yume-site/illust/yozaki-hanabi-ogp.jpg">
+<link rel="icon" href="../illust/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root {
+  --bg: #0b0c2a;
+  --fg: #f1eeff;
+  --muted: #b3b0dc;
+  --star: #ffd36e;
+  --accent: #ff7ad9;
+  --panel: rgba(16, 18, 44, .82);
+  --line: rgba(255, 255, 255, .14);
+  --font: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--fg); font-family: var(--font);
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+  touch-action: none; overscroll-behavior: none;
+}
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+.hud {
+  position: fixed; top: 0; left: 0; right: 0;
+  padding: max(12px, env(safe-area-inset-top)) 16px 0;
+  display: flex; justify-content: space-between; align-items: baseline;
+  pointer-events: none; font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 0, 0, .8);
+}
+.hud .score { font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.hud .time { font-size: 18px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hud .time.low { color: var(--accent); }
+.hud[hidden] { display: none; }
+
+.screen {
+  position: fixed; inset: 0; display: grid; place-items: start center;
+  padding: max(16px, 9vh) 16px 16px;
+}
+.screen[hidden] { display: none; }
+.card {
+  width: min(360px, 100%); padding: 24px 22px 20px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+  text-align: center; display: grid; gap: 12px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+h1 {
+  margin: 0; font-size: 36px; font-weight: 900; letter-spacing: .06em;
+  text-shadow: 0 0 18px rgba(255, 122, 217, .55), 0 0 36px rgba(255, 211, 110, .3);
+}
+.lead { margin: 0; color: var(--muted); line-height: 1.8; font-size: 15px; }
+.lead b { color: var(--fg); }
+button {
+  font: inherit; font-weight: 700; font-size: 17px; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 13px 18px;
+  background: rgba(255, 255, 255, .06); cursor: pointer;
+}
+button.primary {
+  border: none; color: #1b0d24;
+  background: linear-gradient(135deg, var(--star), var(--accent));
+  box-shadow: 0 0 24px rgba(255, 122, 217, .4);
+}
+button:active { transform: scale(.97); }
+.result-score { font-size: 52px; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result-label { margin: 0; color: var(--muted); font-size: 14px; }
+.title-name {
+  margin: 0; font-size: 22px; font-weight: 900; color: var(--star);
+  text-shadow: 0 0 14px rgba(255, 211, 110, .5);
+}
+.best { margin: 0; font-size: 14px; color: var(--muted); }
+.best.new { color: var(--accent); font-weight: 700; }
+.share { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.share button { font-size: 15px; padding: 11px 10px; }
+.stats { margin: 0; font-size: 13px; color: var(--muted); }
+.back { font-size: 13px; color: var(--muted); text-decoration: none; }
+.back:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+
+<div class="hud" id="hud" hidden>
+  <div class="score" id="score">0</div>
+  <div class="time" id="time">45</div>
+</div>
+
+<div class="screen" id="start">
+  <div class="card">
+    <h1>夜咲き花火</h1>
+    <p class="lead">夜空にのぼる光を<b>タップ</b>すると、<br>花火になって咲きます。<br>近くの光を巻きこむと<b>連鎖</b>します。</p>
+    <p class="best" id="startBest"></p>
+    <button class="primary" id="startBtn">はじめる</button>
+    <a class="back" href="../#play">← よるのあそびば</a>
+  </div>
+</div>
+
+<div class="screen" id="end" hidden>
+  <div class="card">
+    <p class="result-label">今夜の花火</p>
+    <div class="result-score" id="resultScore">0</div>
+    <p class="stats" id="resultStats"></p>
+    <p class="result-label">あなたの二つ名</p>
+    <p class="title-name" id="resultTitle"></p>
+    <p class="best" id="resultBest"></p>
+    <button class="primary" id="againBtn">もう一度</button>
+    <div class="share">
+      <button id="shareX">Xに投稿</button>
+      <button id="shareThreads">スレッズに投稿</button>
+    </div>
+    <a class="back" href="../#play">← よるのあそびば</a>
+  </div>
+</div>
+
+<script>
+(() => {
+  const GAME_NAME = '夜咲き花火';
+  const HASHTAG = '夜咲き花火';
+  const GAME_URL = 'https://yumesuisho-cyber.github.io/yume-site/labs/yozaki-hanabi.html';
+  const DURATION = 45;
+  const BEST_KEY = 'yozaki-hanabi-best';
+  const WATER_LINE = 0.83;      // 背景画像の、川面が始まる高さ（上からの割合）
+  const LUNA_CHAIN = 5;         // ルナが出てくる連鎖数
+  const FEVER_CHAIN = 10;       // フィーバーになる連鎖数
+  const FEVER_TIME = 5;
+  const MAX_SPARKS = 2600;
+
+  // 点数ごとの二つ名（低い点でもきれいな名前を）
+  const TITLES = [
+    [0,    'はじめての灯り'],
+    [600,  '夜空の見習い花火師'],
+    [1500, '宵を彩る人'],
+    [3000, '夜空を染めた人'],
+    [5000, '星降る夜の花火師'],
+  ];
+  const titleFor = s => TITLES.filter(([min]) => s >= min).pop()[1];
+
+  const LUNA_LINES = ['たまや〜！', 'かぎや〜！', 'わあ…きれい！', 'すごいすごい！', 'もっと咲かせて！'];
+
+  const $ = id => document.getElementById(id);
+  const canvas = $('sky');
+  const ctx = canvas.getContext('2d');
+  const FONT = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif';
+  let W = 0, H = 0, DPR = 1, waterY = 0;
+
+  // ---- 画像 ----
+  const img = {};
+  for (const name of ['bg', 'yume', 'luna']) {
+    img[name] = new Image();
+    img[name].onload = () => { if (name === 'bg') buildBackground(); };
+    img[name].src = `../illust/yozaki-hanabi-${name}.webp`;
+  }
+  const ready = im => im.complete && im.naturalWidth > 0;
+
+  // 背景は画面の大きさが変わった時だけ描き直す（毎フレーム描かない）
+  const bgLayer = document.createElement('canvas');
+  const bgCtx = bgLayer.getContext('2d');
+  function buildBackground() {
+    bgLayer.width = W * DPR; bgLayer.height = H * DPR;
+    bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const g = bgCtx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#15155a'); g.addColorStop(1, '#4a2a8a');
+    bgCtx.fillStyle = g; bgCtx.fillRect(0, 0, W, H);
+    if (!ready(img.bg)) return;
+    // 高さに合わせ、横が足りない時（PCの横長画面）は左右を鏡写しでつなぐ
+    const bi = img.bg, s = H / bi.naturalHeight, dw = bi.naturalWidth * s;
+    let x = (W - dw) / 2;
+    while (x > 0) x -= dw;
+    for (let i = 0; x < W; i++, x += dw) {
+      const flip = Math.round((x - (W - dw) / 2) / dw) % 2 !== 0;
+      bgCtx.save();
+      if (flip) { bgCtx.translate(x + dw, 0); bgCtx.scale(-1, 1); bgCtx.drawImage(bi, 0, 0, dw, H); }
+      else bgCtx.drawImage(bi, x, 0, dw, H);
+      bgCtx.restore();
+    }
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    waterY = H * WATER_LINE;
+    buildBackground();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function loadBest() { try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; } }
+  function saveBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch {} }
+
+  // ---- 音（ファイルを使わず、その場で鳴らす） ----
+  let audio = null;
+  function initAudio() {
+    if (audio) return;
+    try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch { audio = null; }
+  }
+  function pop(chain, big) {
+    if (!audio) return;
+    const t = audio.currentTime;
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    o.type = 'sine';
+    const base = 330 * Math.pow(1.122, Math.min(chain - 1, 14)); // 連鎖ごとに音が上がる
+    o.frequency.setValueAtTime(base * 1.6, t);
+    o.frequency.exponentialRampToValueAtTime(base, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.2, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(g).connect(audio.destination);
+    o.start(t); o.stop(t + 0.55);
+    // ぱちぱちのノイズ（大きい花火ほど長く）
+    const dur = big ? 0.9 : 0.3;
+    const len = audio.sampleRate * dur;
+    const buf = audio.createBuffer(1, len, audio.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2) * (Math.random() < 0.06 ? 1 : 0.12);
+    const n = audio.createBufferSource();
+    const ng = audio.createGain();
+    ng.gain.value = 0.12;
+    n.buffer = buf; n.connect(ng).connect(audio.destination); n.start(t);
+  }
+
+  // ---- 世界 ----
+  let orbs = [], bursts = [], sparks = [], texts = [];
+  let score = 0, timeLeft = DURATION, spawnTimer = 0, running = false, ending = false;
+  let maxChain = 0, totalBursts = 0, shake = 0;
+  let flash = 0, flashHue = 40;
+  let fever = 0, feverCooldown = 0, feverCount = 0;
+  const yume = { bounce: 0 };
+  const luna = { show: 0, timer: 0, line: '' };
+
+  const HUES = [330, 45, 190, 280, 15, 150];
+
+  function spawnOrb() {
+    const r = 9 + Math.random() * 4;
+    const golden = fever > 0 || Math.random() < 0.06;
+    orbs.push({
+      x: 30 + Math.random() * (W - 60),
+      y: H + r,
+      vy: -(H / 7) * (0.75 + Math.random() * 0.5),
+      r, golden, feverOrb: fever > 0,
+      hue: golden ? 45 : HUES[(Math.random() * HUES.length) | 0],
+      sway: Math.random() * Math.PI * 2,
+    });
+  }
+
+  // 花火の種類: 牡丹（花びら形に開く）／菊（光の尾を引く）／柳（金色がゆっくり垂れる）
+  function addSparks(x, y, kind, hue, power, count) {
+    if (sparks.length > MAX_SPARKS) count = Math.floor(count * 0.35);
+    const petals = 5 + ((Math.random() * 3) | 0);
+    const rot = Math.random() * Math.PI;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + Math.random() * 0.05;
+      let sp = power * (0.85 + Math.random() * 0.3);
+      const s = { x, y, t: 0, hue: hue + (Math.random() * 24 - 12) };
+      if (kind === 'botan') {
+        sp *= 0.45 + 0.55 * Math.abs(Math.cos((petals / 2) * (a + rot)));
+        Object.assign(s, { life: 1.1 + Math.random() * 0.5, size: 2.2 + Math.random() * 1.6, trail: false, grav: 45, drag: 0.03 });
+      } else if (kind === 'kiku') {
+        Object.assign(s, { life: 1.2 + Math.random() * 0.4, size: 1.8 + Math.random(), trail: true, grav: 50, drag: 0.04 });
+      } else { // yanagi
+        sp *= 0.75;
+        Object.assign(s, { life: 2.2 + Math.random() * 0.8, size: 1.6 + Math.random() * 0.8, trail: true, grav: 95, drag: 0.08, hue: 42 + Math.random() * 8 });
+      }
+      s.vx = Math.cos(a) * sp; s.vy = Math.sin(a) * sp;
+      sparks.push(s);
+    }
+  }
+
+  function burst(orb, chain) {
+    orb.dead = true;
+    totalBursts++;
+    maxChain = Math.max(maxChain, chain);
+    const unit = orb.feverOrb ? 20 : orb.golden ? 50 : 10;
+    const gain = unit * chain;
+    score += gain;
+    const base = Math.min(W, H);
+    const maxR = base * (orb.golden ? 0.19 : 0.13) + chain * 3;
+    bursts.push({ x: orb.x, y: orb.y, r: 0, maxR, t: 0, life: 0.38, chain, hue: orb.hue, hit: new Set() });
+
+    const power = base * (orb.golden ? 0.62 : 0.5);
+    if (orb.golden) addSparks(orb.x, orb.y, 'yanagi', 45, power, 110);
+    else addSparks(orb.x, orb.y, Math.random() < 0.5 ? 'botan' : 'kiku', orb.hue, power, 70);
+    if (chain >= LUNA_CHAIN) addSparks(orb.x, orb.y, 'kiku', (orb.hue + 160) % 360, power * 1.3, 50); // 大連鎖は二重に咲く
+
+    if (running) texts.push({ x: orb.x, y: orb.y - 10, text: chain > 1 ? `${chain}連鎖 +${gain}` : `+${gain}`, t: 0, big: chain >= LUNA_CHAIN || orb.golden });
+    shake = Math.min(16, shake + 2 + chain * 0.7);
+    flash = Math.min(0.7, flash + 0.22 + chain * 0.03);
+    flashHue = orb.hue;
+    pop(chain, orb.golden || chain >= LUNA_CHAIN);
+
+    if (running && chain >= LUNA_CHAIN) callLuna(LUNA_LINES[(Math.random() * LUNA_LINES.length) | 0]);
+    if (running && chain >= FEVER_CHAIN && fever <= 0 && feverCooldown <= 0) startFever();
+  }
+
+  function callLuna(line) {
+    if (luna.timer <= 0 || fever > 0) luna.line = line;
+    luna.timer = Math.max(luna.timer, 1.8);
+  }
+
+  function startFever() {
+    fever = FEVER_TIME;
+    feverCount++;
+    luna.line = 'フィーバーだよ！';
+    luna.timer = FEVER_TIME + 0.5;
+    texts.push({ x: W / 2, y: H * 0.32, text: 'フィーバー！', t: 0, big: true, huge: true });
+  }
+
+  function onTap(e) {
+    if (!running) return;
+    e.preventDefault();
+    initAudio();
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    yume.bounce = 1;
+    // 指でも当てやすいように、判定は見た目より広め
+    let best = null, bestD = Infinity;
+    for (const o of orbs) {
+      if (o.dead) continue;
+      const d = Math.hypot(o.x - x, o.y - y);
+      if (d < o.r + 34 && d < bestD) { best = o; bestD = d; }
+    }
+    if (best) burst(best, 1);
+    else {
+      for (let i = 0; i < 8; i++) {
+        const a = Math.random() * Math.PI * 2;
+        sparks.push({ x, y, vx: Math.cos(a) * 60, vy: Math.sin(a) * 60, life: 0.35, t: 0, hue: 240, size: 1.2, trail: false, grav: 0, drag: 0.05 });
+      }
+    }
+  }
+  canvas.addEventListener('pointerdown', onTap, { passive: false });
+
+  // ---- 更新 ----
+  function update(dt) {
+    // フィーバー中は世界が少しゆっくりになる（制限時間は普通に進む）
+    const wdt = fever > 0 ? dt * 0.65 : dt;
+    if (running && !ending) {
+      timeLeft -= dt;
+      const elapsed = DURATION - timeLeft;
+      const interval = fever > 0 ? 0.11 : Math.max(0.16, 0.5 - elapsed * 0.008);
+      spawnTimer -= dt;
+      while (spawnTimer <= 0) { spawnOrb(); spawnTimer += interval; }
+      if (timeLeft <= 0) { timeLeft = 0; ending = true; fever = 0; setTimeout(finish, 1500); }
+      updateHud();
+    }
+    if (fever > 0) { fever -= dt; if (fever <= 0) feverCooldown = 6; }
+    else if (feverCooldown > 0) feverCooldown -= dt;
+
+    for (const o of orbs) {
+      o.y += o.vy * wdt;
+      o.sway += wdt * 2;
+      o.x += Math.sin(o.sway) * 12 * wdt;
+    }
+    for (const b of bursts) {
+      b.t += wdt;
+      b.r = b.maxR * Math.min(1, b.t / b.life);
+      // 広がる花火が触れた光を巻きこむ
+      for (const o of orbs) {
+        if (o.dead || b.hit.has(o)) continue;
+        if (Math.hypot(o.x - b.x, o.y - b.y) < b.r + o.r) { b.hit.add(o); burst(o, b.chain + 1); }
+      }
+    }
+    for (const s of sparks) {
+      s.t += wdt;
+      const k = Math.pow(s.drag, wdt);
+      s.vx *= k; s.vy *= k;
+      s.vy += s.grav * wdt;
+      s.x += s.vx * wdt; s.y += s.vy * wdt;
+    }
+    for (const t of texts) t.t += dt;
+    orbs = orbs.filter(o => !o.dead && o.y > -40);
+    bursts = bursts.filter(b => b.t < b.life + 0.25);
+    sparks = sparks.filter(s => s.t < s.life);
+    texts = texts.filter(t => t.t < (t.huge ? 1.6 : 0.9));
+    shake *= Math.pow(0.002, dt);
+    flash *= Math.pow(0.004, dt);
+    yume.bounce *= Math.pow(0.001, dt);
+
+    // ルナは呼ばれたらすべり込み、時間が来たら帰る（開始・終了画面ではずっといる）
+    if (luna.timer > 0) luna.timer -= dt;
+    const want = (!running || luna.timer > 0) ? 1 : 0;
+    luna.show += (want - luna.show) * Math.min(1, dt * 9);
+    if (!running && !ending) luna.line = '';
+  }
+
+  // ---- 描画 ----
+  const stars = Array.from({ length: 50 }, () => ({ x: Math.random(), y: Math.random() * 0.55, tw: Math.random() * 6.3, r: Math.random() * 1.1 + 0.4 }));
+
+  function drawChar(im, cx, bottom, h, flipX, tilt) {
+    if (!ready(im)) return;
+    const w = im.naturalWidth * h / im.naturalHeight;
+    ctx.save();
+    ctx.translate(cx, bottom);
+    ctx.rotate(tilt);
+    if (flipX) ctx.scale(-1, 1);
+    ctx.drawImage(im, -w / 2, -h, w, h);
+    ctx.restore();
+    return w;
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function draw(time) {
+    ctx.save();
+    if (shake > 0.3) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    ctx.drawImage(bgLayer, -20, -20, W + 40, H + 40); // 揺れても端が見えないよう少し大きく
+    ctx.globalCompositeOperation = 'lighter';
+    for (const s of stars) {
+      ctx.fillStyle = `rgba(255,255,255,${0.15 + 0.25 * Math.sin(time * 1.5 + s.tw)})`;
+      ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 咲いた瞬間に夜空がふわっと明るくなる
+    if (flash > 0.01) {
+      const fg = ctx.createLinearGradient(0, 0, 0, H);
+      fg.addColorStop(0, `hsla(${flashHue},80%,60%,${flash * 0.28})`);
+      fg.addColorStop(1, `hsla(${flashHue},80%,50%,${flash * 0.08})`);
+      ctx.fillStyle = fg; ctx.fillRect(0, 0, W, H);
+    }
+    if (fever > 0) {
+      ctx.fillStyle = `rgba(255,190,80,${0.07 + 0.04 * Math.sin(time * 8)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    for (const o of orbs) {
+      const glow = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r * 3.2);
+      glow.addColorStop(0, `hsla(${o.hue},100%,88%,1)`);
+      glow.addColorStop(0.3, `hsla(${o.hue},100%,62%,.75)`);
+      glow.addColorStop(1, `hsla(${o.hue},100%,50%,0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(o.x, o.y, o.r * 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = `hsla(${o.hue},100%,70%,.4)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y + o.r); ctx.lineTo(o.x - Math.cos(o.sway) * 4, o.y + o.r + 30); ctx.stroke();
+    }
+
+    for (const b of bursts) {
+      const a = Math.max(0, 1 - b.t / (b.life + 0.25));
+      ctx.strokeStyle = `hsla(${b.hue},100%,70%,${a * 0.35})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+      if (b.t < 0.15) {
+        const k = 1 - b.t / 0.15;
+        const cg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 60);
+        cg.addColorStop(0, `hsla(${b.hue},100%,95%,${k})`);
+        cg.addColorStop(1, `hsla(${b.hue},100%,60%,0)`);
+        ctx.fillStyle = cg;
+        ctx.beginPath(); ctx.arc(b.x, b.y, 60, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    ctx.lineCap = 'round';
+    for (const s of sparks) {
+      const a = 1 - s.t / s.life;
+      const col = `hsla(${s.hue},100%,${58 + a * 30}%,${Math.min(1, a * 1.4)})`;
+      if (s.trail) {
+        ctx.strokeStyle = col; ctx.lineWidth = s.size;
+        ctx.beginPath(); ctx.moveTo(s.x - s.vx * 0.06, s.y - s.vy * 0.06); ctx.lineTo(s.x, s.y); ctx.stroke();
+      } else {
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.size * (0.6 + a * 0.6), 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    // 川面への映り込み（花火の高さを、水面の下へ縮めて写す）
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, waterY, W, H - waterY); ctx.clip();
+    const depth = (H - waterY) / waterY * 0.95;
+    for (let i = 0; i < sparks.length; i += 2) {
+      const s = sparks[i];
+      if (s.y >= waterY) continue;
+      const a = (1 - s.t / s.life) * 0.4;
+      const ry = waterY + (waterY - s.y) * depth;
+      const wob = Math.sin(time * 3 + ry * 0.2) * 5;
+      ctx.fillStyle = `hsla(${s.hue},100%,70%,${a})`;
+      ctx.fillRect(s.x + wob - s.size * 3, ry, s.size * 6, 1.6);
+    }
+    for (const b of bursts) {
+      if (b.t > 0.5) continue;
+      const k = (1 - b.t / 0.5) * 0.5;
+      const ry = waterY + (waterY - b.y) * depth;
+      const rg = ctx.createRadialGradient(b.x, ry, 0, b.x, ry, 70);
+      rg.addColorStop(0, `hsla(${b.hue},100%,75%,${k})`);
+      rg.addColorStop(1, `hsla(${b.hue},100%,60%,0)`);
+      ctx.fillStyle = rg;
+      ctx.save(); ctx.translate(b.x, ry); ctx.scale(1.8, 0.35); ctx.translate(-b.x, -ry);
+      ctx.beginPath(); ctx.arc(b.x, ry, 70, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    if (flash > 0.01) {
+      ctx.fillStyle = `hsla(${flashHue},80%,60%,${flash * 0.15})`;
+      ctx.fillRect(0, waterY, W, H - waterY);
+    }
+    ctx.restore();
+
+    // ゆめとルナ（手前に立って、花火を見上げている）
+    ctx.globalCompositeOperation = 'source-over';
+    const ch = Math.min(H * 0.42, W * 0.95);
+    const sink = ch * 0.34; // 下のほうは画面の外に出して、手前に立っている感じに
+    const yb = yume.bounce;
+    drawChar(img.yume, W * 0.02 + ch * 0.22, H + sink - yb * 12, ch, false, -yb * 0.04);
+
+    if (luna.show > 0.01 && ready(img.luna)) {
+      const lh = ch * 0.86;
+      const lw = img.luna.naturalWidth * lh / img.luna.naturalHeight;
+      const e = 1 - Math.pow(1 - luna.show, 3);
+      const hop = luna.timer > 0 ? Math.abs(Math.sin(time * 9)) * 6 : 0;
+      const cx = W + lw * 0.6 - e * (lw * 0.6 + W * 0.04 + lw * 0.5) ;
+      drawChar(img.luna, cx, H + lh * 0.3 - hop, lh, false, 0);
+
+      if (luna.line && luna.show > 0.6) {
+        ctx.font = `900 17px ${FONT}`;
+        const tw = ctx.measureText(luna.line).width;
+        const bw = tw + 28, bh = 38;
+        const bx = Math.max(8, Math.min(W - bw - 8, cx - bw / 2));
+        const by = H + lh * 0.3 - lh - bh - 6;
+        ctx.globalAlpha = Math.min(1, (luna.show - 0.6) / 0.3);
+        ctx.fillStyle = 'rgba(255,255,255,.95)';
+        ctx.shadowColor = 'rgba(255,122,217,.7)'; ctx.shadowBlur = 14;
+        roundRect(bx, by, bw, bh, 19); ctx.fill();
+        ctx.shadowBlur = 0;
+        const tx = Math.min(bx + bw - 20, Math.max(bx + 20, cx));
+        ctx.beginPath(); ctx.moveTo(tx - 8, by + bh - 1); ctx.lineTo(tx, by + bh + 10); ctx.lineTo(tx + 8, by + bh - 1); ctx.fill();
+        ctx.fillStyle = '#4a2a6e'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(luna.line, bx + bw / 2, by + bh / 2 + 1);
+        ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+      }
+    }
+
+    ctx.textAlign = 'center';
+    for (const t of texts) {
+      const life = t.huge ? 1.6 : 0.9;
+      const a = 1 - t.t / life;
+      ctx.globalAlpha = a;
+      ctx.font = `900 ${t.huge ? 44 : t.big ? 24 : 16}px ${FONT}`;
+      ctx.fillStyle = t.big ? '#ffd36e' : '#fff';
+      ctx.shadowColor = 'rgba(255,122,217,.9)'; ctx.shadowBlur = t.huge ? 24 : 10;
+      const sc = t.huge ? 1 + Math.max(0, 0.3 - t.t) * 2 : 1;
+      ctx.save(); ctx.translate(t.x, t.y - (t.huge ? 0 : t.t * 40)); ctx.scale(sc, sc);
+      ctx.fillText(t.text, 0, 0); ctx.restore();
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw(now / 1000);
+    requestAnimationFrame(frame);
+  }
+
+  // ---- 画面の切り替え ----
+  function updateHud() {
+    $('score').textContent = score.toLocaleString();
+    const tEl = $('time');
+    tEl.textContent = Math.ceil(timeLeft);
+    tEl.classList.toggle('low', timeLeft <= 10);
+  }
+
+  function start() {
+    initAudio();
+    if (audio && audio.state === 'suspended') audio.resume();
+    orbs = []; bursts = []; sparks = []; texts = [];
+    score = 0; timeLeft = DURATION; spawnTimer = 0; maxChain = 0; totalBursts = 0;
+    fever = 0; feverCooldown = 0; feverCount = 0;
+    luna.timer = 0; luna.line = '';
+    ending = false; running = true;
+    $('start').hidden = true; $('end').hidden = true; $('hud').hidden = false;
+    updateHud();
+  }
+
+  let lastResult = { score: 0, title: '' };
+  function finish() {
+    running = false; ending = false;
+    const prev = loadBest();
+    const isNew = score > prev && prev > 0;
+    if (score > prev) saveBest(score);
+    const title = titleFor(score);
+    lastResult = { score, title };
+    $('resultScore').textContent = score.toLocaleString();
+    $('resultStats').textContent = `咲かせた花火 ${totalBursts}発・最大 ${maxChain}連鎖` + (feverCount ? `・フィーバー ${feverCount}回` : '');
+    $('resultTitle').textContent = `「${title}」`;
+    const bestEl = $('resultBest');
+    bestEl.textContent = prev === 0 ? 'はじめての記録です' : isNew ? '自己ベスト更新！' : `自己ベスト ${prev.toLocaleString()}`;
+    bestEl.classList.toggle('new', isNew);
+    $('hud').hidden = true;
+    $('end').hidden = false;
+  }
+
+  function shareText() {
+    return `${GAME_NAME}で${lastResult.score.toLocaleString()}点、二つ名「${lastResult.title}」をもらいました🎆\n#${HASHTAG}\n${GAME_URL}`;
+  }
+  $('shareX').addEventListener('click', () => {
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText()), '_blank', 'noopener');
+  });
+  $('shareThreads').addEventListener('click', () => {
+    window.open('https://www.threads.net/intent/post?text=' + encodeURIComponent(shareText()), '_blank', 'noopener');
+  });
+  $('startBtn').addEventListener('click', start);
+  $('againBtn').addEventListener('click', start);
+
+  const b = loadBest();
+  if (b > 0) $('startBest').textContent = `自己ベスト ${b.toLocaleString()}`;
+
+  // 開始前も、背景で光がのぼって時々咲く
+  setInterval(() => {
+    if (running) return;
+    if (orbs.length < 6) spawnOrb();
+    const o = orbs.find(o => o.y < H * 0.45 && !o.dead);
+    if (o && Math.random() < 0.5) burst(o, 1);
+  }, 700);
+  // 動作確認用（URLの末尾に ?debug を付けた時だけ）
+  if (location.search.includes('debug')) window.__hanabi = { callLuna, startFever, finish, state: () => ({ score, fever, luna: { ...luna }, sparks: sparks.length }) };
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
