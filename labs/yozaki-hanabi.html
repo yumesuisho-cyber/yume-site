@@ -52,6 +52,15 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 .hud .time { font-size: 18px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .hud .time.low { color: var(--accent); }
 .hud[hidden] { display: none; }
+.hud { padding-right: 64px; } /* 右上の音ボタンとかぶらないように */
+
+/* 音を消すボタン（どの画面でも右上に） */
+.mute {
+  position: fixed; z-index: 5;
+  top: max(8px, env(safe-area-inset-top)); right: 12px;
+  width: 42px; height: 42px; padding: 0; border-radius: 50%;
+  font-size: 18px; line-height: 1; background: rgba(16, 18, 44, .6);
+}
 
 .screen {
   position: fixed; inset: 0; display: grid; place-items: start center;
@@ -98,6 +107,7 @@ button:active { transform: scale(.97); }
 </head>
 <body>
 <canvas id="sky"></canvas>
+<button class="mute" id="mute" type="button" aria-label="音を消す">🔊</button>
 
 <div class="hud" id="hud" hidden>
   <div class="score" id="score">0</div>
@@ -208,37 +218,195 @@ button:active { transform: scale(.97); }
   function loadBest() { try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; } }
   function saveBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch {} }
 
-  // ---- 音（ファイルを使わず、その場で鳴らす） ----
-  let audio = null;
+  // ---- 音 ----
+  // 花火の音はその場で合成する（ファイルなし）。BGMだけはファイル（Sunoで作った曲）
+  const BGM_URL = '../illust/yozaki-hanabi-bgm.mp3';
+  const BGM_LEVEL = 0.5;
+  const MUTE_KEY = 'yozaki-hanabi-mute';
+  let audio = null, master = null, sfxBus = null, bgmIn = null, bgmGain = null;
+  let bgmBuffer = null, bgmLoop = null, bgmSource = null, bgmWanted = false;
+  let noiseBuf = null, crackleBuf = null, lastBoom = 0;
+  let muted = (() => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; } })();
+  const bgmData = fetch(BGM_URL).then(r => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+
   function initAudio() {
     if (audio) return;
-    try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch { audio = null; }
+    try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch { audio = null; return; }
+    const sr = audio.sampleRate;
+    // 出口：連鎖で音が重なっても割れないように、軽くまとめる
+    const comp = audio.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.25;
+    master = audio.createGain();
+    master.gain.value = muted ? 0 : 1;
+    master.connect(comp).connect(audio.destination);
+    // 花火の音は、そのままの音と、夜空に広がる響き（リバーブ）の両方へ
+    sfxBus = audio.createGain();
+    sfxBus.connect(master);
+    const reverb = audio.createConvolver();
+    const irLen = Math.floor(sr * 2.4);
+    const ir = audio.createBuffer(2, irLen, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < irLen; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLen, 3.2);
+    }
+    reverb.buffer = ir;
+    const wet = audio.createGain();
+    wet.gain.value = 0.32;
+    sfxBus.connect(reverb);
+    reverb.connect(wet).connect(master);
+    // 使い回す音の素：ざーっという音と、ぱちっというはじけを散らした音
+    noiseBuf = audio.createBuffer(1, Math.floor(sr * 1.5), sr);
+    { const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    crackleBuf = audio.createBuffer(1, sr * 3, sr);
+    {
+      const d = crackleBuf.getChannelData(0);
+      for (let k = 0; k < 900; k++) {
+        const at = Math.floor(Math.random() * (d.length - 400));
+        const amp = 0.3 + Math.random() * 0.7, len = 40 + ((Math.random() * 200) | 0);
+        for (let i = 0; i < len; i++) d[at + i] += (Math.random() * 2 - 1) * amp * Math.pow(1 - i / len, 2);
+      }
+    }
+    // BGM：低い音を弱めて、花火の「ドン」の場所を空けておく
+    bgmIn = audio.createBiquadFilter();
+    bgmIn.type = 'highpass'; bgmIn.frequency.value = 140; bgmIn.Q.value = 0.6;
+    bgmGain = audio.createGain();
+    bgmGain.gain.value = BGM_LEVEL;
+    bgmIn.connect(bgmGain).connect(master);
+    bgmData
+      .then(ab => ab && audio.decodeAudioData(ab))
+      .then(b => {
+        if (!b) return;
+        // MP3は頭と終わりにわずかな無音が入るので、音のある範囲だけをくり返す
+        const d = b.getChannelData(0);
+        let a = 0, z = d.length - 1;
+        while (a < b.sampleRate && Math.abs(d[a]) < 1e-5) a++;
+        while (z > d.length - b.sampleRate && Math.abs(d[z]) < 1e-5) z--;
+        bgmBuffer = b;
+        bgmLoop = [a / b.sampleRate, (z + 1) / b.sampleRate];
+        if (bgmWanted) startBgm();
+      })
+      .catch(() => {});
   }
-  function pop(chain, big) {
+
+  function startBgm() {
+    bgmWanted = true;
+    if (!audio || !bgmBuffer || bgmSource) return;
+    bgmSource = audio.createBufferSource();
+    bgmSource.buffer = bgmBuffer;
+    bgmSource.loop = true;
+    [bgmSource.loopStart, bgmSource.loopEnd] = bgmLoop;
+    bgmSource.connect(bgmIn);
+    const t = audio.currentTime;
+    bgmGain.gain.setValueAtTime(0.0001, t);
+    bgmGain.gain.exponentialRampToValueAtTime(BGM_LEVEL, t + 1.5);
+    bgmSource.start(t, bgmLoop[0]);
+  }
+
+  // 花火が咲いた瞬間だけ、BGMを小さくして花火の音を聞かせる
+  function duck(depth) {
+    if (!bgmGain) return;
+    const t = audio.currentTime, g = bgmGain.gain;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(Math.max(0.0001, g.value), t);
+    g.linearRampToValueAtTime(BGM_LEVEL * depth, t + 0.04);
+    g.setTargetAtTime(BGM_LEVEL, t + 0.3, 0.35);
+  }
+
+  function noiseVoice(buf, offset, dur, type, freq, gain, attack, delay = 0) {
+    const t = audio.currentTime + delay;
+    const s = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+    s.buffer = buf;
+    f.type = type; f.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f).connect(g).connect(sfxBus);
+    s.start(t, offset, dur + 0.05);
+    return f;
+  }
+
+  // ドン：お腹に響く低い音と、空気が押し出される音
+  function boom(size) {
+    const t = audio.currentTime;
+    if (t - lastBoom < 0.06) size *= 0.4; // 連鎖でいっせいに鳴っても、うるさくなりすぎないように
+    lastBoom = t;
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(95, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.35);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.9 * size, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+    o.connect(g).connect(sfxBus);
+    o.start(t); o.stop(t + 0.75);
+    const f = noiseVoice(noiseBuf, Math.random() * 0.4, 0.9, 'lowpass', 1600, 0.7 * size, 0.004);
+    f.frequency.setValueAtTime(1600, t);
+    f.frequency.exponentialRampToValueAtTime(220, t + 0.6);
+  }
+
+  // パチパチ：開いたあとに火花がはじける音（尾を引く花火ほど長く）
+  function crackle(dur, gain) {
+    noiseVoice(crackleBuf, Math.random() * (3 - dur), dur, 'highpass', 1800, gain, 0.08, 0.18);
+  }
+
+  // ひゅ〜：光がのぼっていく音
+  function whistle(gain) {
     if (!audio) return;
     const t = audio.currentTime;
-    const o = audio.createOscillator();
-    const g = audio.createGain();
+    const o = audio.createOscillator(), g = audio.createGain();
+    const lfo = audio.createOscillator(), lg = audio.createGain();
     o.type = 'sine';
-    const base = 330 * Math.pow(1.122, Math.min(chain - 1, 14)); // 連鎖ごとに音が上がる
-    o.frequency.setValueAtTime(base * 1.6, t);
-    o.frequency.exponentialRampToValueAtTime(base, t + 0.12);
+    o.frequency.setValueAtTime(900, t);
+    o.frequency.exponentialRampToValueAtTime(2400, t + 1.1);
+    lfo.frequency.value = 7; lg.gain.value = 25;
+    lfo.connect(lg).connect(o.frequency);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.2, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-    o.connect(g).connect(audio.destination);
-    o.start(t); o.stop(t + 0.55);
-    // ぱちぱちのノイズ（大きい花火ほど長く）
-    const dur = big ? 0.9 : 0.3;
-    const len = audio.sampleRate * dur;
-    const buf = audio.createBuffer(1, len, audio.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2) * (Math.random() < 0.06 ? 1 : 0.12);
-    const n = audio.createBufferSource();
-    const ng = audio.createGain();
-    ng.gain.value = 0.12;
-    n.buffer = buf; n.connect(ng).connect(audio.destination); n.start(t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+    o.connect(g).connect(sfxBus);
+    o.start(t); o.stop(t + 1.25); lfo.start(t); lfo.stop(t + 1.25);
+    noiseVoice(noiseBuf, Math.random() * 0.3, 1.1, 'bandpass', 2500, gain * 0.6, 0.2);
   }
+
+  // 連鎖の音：五音音階で1段ずつ高くなる（連鎖が伸びているのが耳でも分かる）
+  const PENTA = [0, 2, 4, 7, 9];
+  function chime(chain) {
+    const step = Math.min(chain - 1, 14);
+    const semi = 12 * Math.floor(step / 5) + PENTA[step % 5];
+    const t = audio.currentTime;
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle';
+    o.frequency.value = 392 * Math.pow(2, semi / 12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.13, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o.connect(g).connect(sfxBus);
+    o.start(t); o.stop(t + 0.65);
+  }
+
+  function fireworkSound(chain, kind) {
+    if (!audio) return;
+    const big = kind === 'yanagi' || chain >= LUNA_CHAIN;
+    boom(big ? 1 : 0.75);
+    crackle(kind === 'yanagi' ? 2.4 : kind === 'kiku' ? 1.3 : 0.8, big ? 0.35 : 0.22);
+    chime(chain);
+    duck(big ? 0.35 : 0.6);
+  }
+
+  function setMuted(m) {
+    muted = m;
+    try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); } catch {}
+    if (master) master.gain.setTargetAtTime(m ? 0 : 1, audio.currentTime, 0.05);
+    const b = $('mute');
+    b.textContent = m ? '🔇' : '🔊';
+    b.setAttribute('aria-label', m ? '音を出す' : '音を消す');
+  }
+
+  // スマホで別のアプリに切り替えたら、音も止める
+  document.addEventListener('visibilitychange', () => {
+    if (!audio) return;
+    if (document.hidden) audio.suspend(); else audio.resume();
+  });
 
   // ---- 世界 ----
   let orbs = [], bursts = [], sparks = [], texts = [];
@@ -262,6 +430,8 @@ button:active { transform: scale(.97); }
       hue: golden ? 45 : HUES[(Math.random() * HUES.length) | 0],
       sway: Math.random() * Math.PI * 2,
     });
+    // 金色の光（めずらしい）だけ、ひゅ〜と鳴って知らせる
+    if (golden && running && fever <= 0) whistle(0.07);
   }
 
   // 花火の種類: 牡丹（花びら形に開く）／菊（光の尾を引く）／柳（金色がゆっくり垂れる）
@@ -299,15 +469,16 @@ button:active { transform: scale(.97); }
     bursts.push({ x: orb.x, y: orb.y, r: 0, maxR, t: 0, life: 0.38, chain, hue: orb.hue, hit: new Set() });
 
     const power = base * (orb.golden ? 0.62 : 0.5);
+    const kind = orb.golden ? 'yanagi' : Math.random() < 0.5 ? 'botan' : 'kiku';
     if (orb.golden) addSparks(orb.x, orb.y, 'yanagi', 45, power, 110);
-    else addSparks(orb.x, orb.y, Math.random() < 0.5 ? 'botan' : 'kiku', orb.hue, power, 70);
+    else addSparks(orb.x, orb.y, kind, orb.hue, power, 70);
     if (chain >= LUNA_CHAIN) addSparks(orb.x, orb.y, 'kiku', (orb.hue + 160) % 360, power * 1.3, 50); // 大連鎖は二重に咲く
 
     if (running) texts.push({ x: orb.x, y: orb.y - 10, text: chain > 1 ? `${chain}連鎖 +${gain}` : `+${gain}`, t: 0, big: chain >= LUNA_CHAIN || orb.golden });
     shake = Math.min(16, shake + 2 + chain * 0.7);
     flash = Math.min(0.7, flash + 0.22 + chain * 0.03);
     flashHue = orb.hue;
-    pop(chain, orb.golden || chain >= LUNA_CHAIN);
+    fireworkSound(chain, kind);
 
     if (running && chain >= LUNA_CHAIN) callLuna(LUNA_LINES[(Math.random() * LUNA_LINES.length) | 0]);
     if (running && chain >= FEVER_CHAIN && fever <= 0 && feverCooldown <= 0) startFever();
@@ -324,6 +495,7 @@ button:active { transform: scale(.97); }
     luna.line = 'フィーバーだよ！';
     luna.timer = FEVER_TIME + 0.5;
     texts.push({ x: W / 2, y: H * 0.32, text: 'フィーバー！', t: 0, big: true, huge: true });
+    for (let i = 0; i < 3; i++) setTimeout(() => whistle(0.09), i * 140);
   }
 
   function onTap(e) {
@@ -587,6 +759,7 @@ button:active { transform: scale(.97); }
   function start() {
     initAudio();
     if (audio && audio.state === 'suspended') audio.resume();
+    startBgm();
     orbs = []; bursts = []; sparks = []; texts = [];
     score = 0; timeLeft = DURATION; spawnTimer = 0; maxChain = 0; totalBursts = 0;
     fever = 0; feverCooldown = 0; feverCount = 0;
@@ -625,6 +798,8 @@ button:active { transform: scale(.97); }
   });
   $('startBtn').addEventListener('click', start);
   $('againBtn').addEventListener('click', start);
+  $('mute').addEventListener('click', () => setMuted(!muted));
+  setMuted(muted);
 
   const b = loadBest();
   if (b > 0) $('startBest').textContent = `自己ベスト ${b.toLocaleString()}`;
@@ -637,7 +812,7 @@ button:active { transform: scale(.97); }
     if (o && Math.random() < 0.5) burst(o, 1);
   }, 700);
   // 動作確認用（URLの末尾に ?debug を付けた時だけ）
-  if (location.search.includes('debug')) window.__hanabi = { callLuna, startFever, finish, state: () => ({ score, fever, luna: { ...luna }, sparks: sparks.length }) };
+  if (location.search.includes('debug')) window.__hanabi = { callLuna, startFever, finish, state: () => ({ score, fever, luna: { ...luna }, sparks: sparks.length, audio: audio && audio.state, bgmLoop, bgmPlaying: !!bgmSource, bgmGain: bgmGain && bgmGain.gain.value, muted }) };
 
   requestAnimationFrame(frame);
 })();
