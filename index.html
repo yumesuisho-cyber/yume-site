@@ -148,6 +148,12 @@ html[data-theme="dark"] .frame{background:linear-gradient(135deg,#2A2440,#221E32
 .frame.capped img{height:360px;object-fit:cover;object-position:center 42%}
 .frame .ph{color:var(--ink-soft);font-size:14px;letter-spacing:.1em;padding:56px 20px;text-align:center}
 
+/* 動画（16:9のまま、幅に合わせて縮む） */
+.video{position:relative;aspect-ratio:16/9;border-radius:16px;overflow:hidden;
+  background:var(--bg2);box-shadow:var(--shadow);margin:0 0 12px}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+p.vnote{margin:0 0 1.8em;font-size:14px;color:var(--ink-soft);letter-spacing:.04em}
+
 /* カードの正方形サムネイル */
 .card.media{padding:0;overflow:hidden}
 .card.media .cbody{padding:20px 18px 24px}
@@ -374,6 +380,25 @@ mark.hit{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px}
     </p>
     </div>
     </div>
+  </div>
+</section>
+
+<!-- MV：好きから、はじまる -->
+<section class="section" id="mv">
+  <div class="wrap sbody">
+    <h2>好きから、はじまる</h2>
+    <p class="lead">MUSIC VIDEO</p>
+    <div class="video">
+      <iframe src="https://www.youtube-nocookie.com/embed/qDJG2trAmuM"
+              title="好きから、はじまる｜水晶ゆめの自己紹介MV"
+              loading="lazy" allowfullscreen
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+    <p class="vnote">※歌声はAIで生成しています</p>
+    <p>今の私を、ゆめとルナのMVにしました。</p>
+    <p><a href="https://note.com/yume_suisho/n/n7172bdf27d1b"
+          target="_blank" rel="noopener noreferrer">つくるまでの話を、記事にしています</a></p>
   </div>
 </section>
 
