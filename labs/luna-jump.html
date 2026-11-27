@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>ルナの夜空のぼり｜30秒のジャンプゲーム</title>
+<meta name="description" content="ぽんぽん跳ねるルナを左右に動かして、雲をのぼる30秒のゲーム。高さと星のかけらで点を競います。スマホでそのまま遊べます。">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../illust/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root {
+  --bg: #07081c;
+  --fg: #f1eeff;
+  --muted: #b3b0dc;
+  --star: #ffd36e;
+  --accent: #b79bff;
+  --panel: rgba(16, 18, 44, .82);
+  --line: rgba(255, 255, 255, .14);
+  --font: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--fg); font-family: var(--font);
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+  touch-action: none; overscroll-behavior: none;
+}
+/* 遊ぶ場所は、画面のまんなかの縦長の列（スマホでは画面いっぱい） */
+.stage { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); overflow: hidden; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: max(12px, env(safe-area-inset-top)) 16px 0;
+  display: flex; justify-content: space-between; align-items: baseline;
+  pointer-events: none; font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 0, 0, .8);
+}
+.hud .score { font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.hud .score small { font-size: 15px; margin-left: 2px; color: var(--muted); }
+.hud .sub { font-size: 15px; margin-left: 12px; color: var(--muted); }
+.hud .starcount { margin-left: 8px; color: var(--star); }
+.hud .time { font-size: 18px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hud .time.low { color: var(--star); }
+.hud[hidden] { display: none; }
+
+.screen {
+  position: absolute; inset: 0; display: grid; place-items: start center;
+  padding: max(16px, 9vh) 16px 16px;
+}
+.screen[hidden] { display: none; }
+.card {
+  width: min(340px, 100%); padding: 22px 20px 18px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+  text-align: center; display: grid; gap: 12px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+h1 {
+  margin: 0; font-size: 28px; font-weight: 900; letter-spacing: .04em;
+  text-shadow: 0 0 18px rgba(183, 155, 255, .55), 0 0 36px rgba(255, 211, 110, .25);
+}
+.tag { margin: 0; font-size: 12px; color: var(--star); letter-spacing: .1em; }
+.lead { margin: 0; color: var(--muted); line-height: 1.8; font-size: 15px; }
+.lead b { color: var(--fg); }
+button {
+  font: inherit; font-weight: 700; font-size: 17px; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 13px 18px;
+  background: rgba(255, 255, 255, .06); cursor: pointer;
+}
+button.primary {
+  border: none; color: #1b0d24;
+  background: linear-gradient(135deg, var(--star), var(--accent));
+  box-shadow: 0 0 24px rgba(183, 155, 255, .4);
+}
+button:active { transform: scale(.97); }
+.result-score { font-size: 52px; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result-score small { font-size: 22px; margin-left: 4px; color: var(--muted); }
+.result-luna { width: 132px; height: auto; margin: -6px auto -8px; display: block; }
+.result-luna.pop { animation: lunaPop .45s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes lunaPop { from { transform: translateY(14px) scale(.85); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .result-luna.pop { animation: none; } }
+.result-stars { margin: 0; font-size: 17px; }
+.result-stars b { color: var(--star); }
+.back { font-size: 13px; color: var(--muted); text-decoration: none; }
+.result-label, .best { margin: 0; color: var(--muted); font-size: 14px; }
+
+/* ランキング */
+.rank-line { margin: 0; font-size: 14px; color: var(--star); min-height: 1.4em; }
+button.sub-btn { font-size: 15px; padding: 10px 16px; }
+.rank-card { gap: 10px; padding-top: 18px; }
+.rank-card h2 { margin: 0; font-size: 20px; font-weight: 900; letter-spacing: .06em; }
+.ranks {
+  list-style: none; margin: 0; padding: 0; text-align: left;
+  max-height: min(46vh, 380px); overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.ranks li { display: flex; align-items: baseline; gap: 8px; padding: 7px 4px; font-size: 15px; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.ranks li:last-child { border-bottom: none; }
+.ranks .no { width: 3.2em; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.ranks .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranks .who small { margin-left: 6px; font-size: 11px; color: var(--star); }
+.ranks .val { font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+.ranks li.me { color: var(--star); }
+.ranks li.me .no { color: var(--star); }
+.ranks li.empty { display: block; color: var(--muted); font-size: 14px; line-height: 1.7; text-align: center; padding: 14px 4px; }
+.rank-note { margin: 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.nick-form { display: flex; gap: 8px; }
+.nick-form input {
+  flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--fg);
+  padding: 10px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .08);
+  user-select: text; -webkit-user-select: text; touch-action: manipulation;
+}
+.nick-form input::placeholder { color: var(--muted); opacity: .7; }
+.nick-form button { flex: none; font-size: 15px; padding: 10px 16px; }
+.nick-msg { margin: 0; font-size: 12px; color: var(--star); min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="c"></canvas>
+
+  <div class="hud" id="hud" hidden>
+    <div class="score"><span id="points">0</span><small>点</small><span class="sub"><span id="height">0</span>m<span class="starcount">★<span id="stars">0</span></span></span></div>
+    <div class="time" id="time">30.0</div>
+  </div>
+
+  <div class="screen" id="titleScreen">
+    <div class="card">
+      <p class="tag">30秒のジャンプゲーム</p>
+      <h1>ルナの夜空のぼり</h1>
+      <p class="lead">ルナは、ひとりでぽんぽん跳ねます。<br>
+        <b>画面の左か右をさわる</b>と、そっちへ動きます。<br>
+        （PCは <b>← →</b> キー）<br>
+        30秒で、どこまでのぼれるかな。<br>
+        点は <b>高さ ＋ ★×10</b>。</p>
+      <button class="primary" id="startBtn">はじめる</button>
+      <button class="sub-btn" id="rankBtnTitle">ランキングを見る</button>
+      <a class="back" href="../#play">← よるのあそびば</a>
+    </div>
+  </div>
+
+  <div class="screen" id="resultScreen" hidden>
+    <div class="card">
+      <img class="result-luna" id="resultLuna" alt="がんばったルナ" width="398" height="456">
+      <p class="result-label">30秒の点数</p>
+      <div class="result-score"><span id="resultPoints">0</span><small>点</small></div>
+      <p class="result-stars">高さ <span id="resultHeight">0</span>m ＋ <b>★<span id="resultStars">0</span></b> × <span id="resultStarPoints">10</span></p>
+      <p class="best" id="best"></p>
+      <p class="rank-line" id="rankLine"></p>
+      <button class="primary" id="againBtn">もう一回</button>
+      <button class="sub-btn" id="rankBtnResult">ランキングを見る</button>
+    </div>
+  </div>
+
+  <div class="screen" id="rankScreen" hidden>
+    <div class="card rank-card">
+      <h2 id="rankTitle">ランキング</h2>
+      <ol class="ranks" id="ranks"></ol>
+      <p class="rank-note" id="rankNote"></p>
+      <form class="nick-form" id="nickForm" autocomplete="off">
+        <input id="nick" maxlength="12" placeholder="ニックネーム" aria-label="ニックネーム" enterkeyhint="done">
+        <button type="submit">きめる</button>
+      </form>
+      <p class="nick-msg" id="nickMsg" aria-live="polite"></p>
+      <button class="sub-btn" id="rankBack">もどる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ============================================================
+  // 1. ルナの絵（読み込みはここ1か所。差しかえるときは、ここだけ直す）
+  //    7枚とも 398×456 の同じキャンバスで、足もとは下から12pxの線・横は真ん中
+  // ============================================================
+  const SPRITE_DIR = '../illust/luna-jump-';
+  const SPRITE_FILES = {
+    jump:  '01-jump.webp',        // 上へ跳んでいる
+    right: '02-jump-right.webp',  // 右へ動いている
+    left:  '03-jump-left.webp',   // 左へ動いている
+    fall:  '04-fall.webp',        // 落ちている
+    land:  '05-land.webp',        // 雲に着地した瞬間
+    star:  '06-star.webp',        // 星のかけらを取った瞬間
+    finish: '07-finish.webp',     // がんばったあと（結果画面）
+  };
+  const SPRITE_W = 398, SPRITE_H = 456, SPRITE_FOOT = 12; // 絵のキャンバスの決まり
+
+  const sprites = {};
+  function loadSprites() {
+    return Promise.all(Object.entries(SPRITE_FILES).map(([name, file]) => new Promise(done => {
+      const img = new Image();
+      img.onload = () => { sprites[name] = img; done(); };
+      img.onerror = () => { console.warn('絵が読み込めませんでした:', file); done(); };
+      img.src = SPRITE_DIR + file;
+    })));
+  }
+
+  // ============================================================
+  // 2. 手ざわりの数字（跳ねる気持ちよさは、ここをいじって確かめる）
+  //    長さの単位は「画面の横幅を360としたときの目もり」
+  // ============================================================
+  const CFG = {
+    PLAY_SECONDS: 30,
+    WORLD_W: 360,            // 画面の横幅
+    GRAVITY: 1500,           // 落ちる強さ
+    JUMP_SPEED: 640,         // 跳ねる強さ（高さは JUMP_SPEED² ÷ (2×GRAVITY) ≒ 136）
+    MOVE_SPEED: 240,         // 左右へ動く速さ
+    MOVE_EASE: 12,           // 左右の動き出しのなめらかさ（大きいほどきびきび）
+    LAND_HOLD: 0.08,         // 着地の絵を見せる時間（秒）。このあいだ雲の上で一瞬しずむ
+    FALL_SPRITE_SPEED: 260,  // これより速く落ちているときだけ「落ちている」絵にする
+    SIDE_SPRITE_SPEED: 40,   // これより速く横へ動いているとき、右／左の絵にする
+    LUNA_H: 88,              // ルナを描く高さ
+    EDGE_MARGIN: 26,         // 画面の端からこの幅より外へは行けない（ルナの体が半分くらい残る）
+    FOOT_HALF: 16,          // 当たり判定：足もとの幅の半分（絵の四角全体では判定しない）
+    CLOUD_W: 84,             // 雲の幅
+    CLOUD_GAP_MIN: 62,       // 雲と雲の高さのすきま（最小）
+    CLOUD_GAP_MAX: 100,      // 　〃（最大。跳ねる高さ136より小さくしておく）
+    CLOUD_SHIFT_MAX: 170,    // 次の雲が横にずれる幅（最大）
+    // しかけ①：動く雲（左右にふわふわ動く）
+    MOVING_FROM_M: 15,       // この高さ(m)から出はじめる（最初は動かない雲だけで慣れる）
+    MOVING_RATE: 0.3,        // 動く雲がまざる割合（0でしかけなし。2つ続けては出ない）
+    MOVING_SPEED_MIN: 65,    // 動く速さ（おそい雲）
+    MOVING_SPEED_MAX: 105,   // 　〃　　（はやい雲）
+    // しかけ②：消える雲（乗ると少しして消えて、しばらくすると戻ってくる）
+    FADE_FROM_M: 40,         // この高さ(m)から出はじめる
+    FADE_RATE: 0.2,          // 消える雲がまざる割合（0でしかけなし。2つ続けては出ない）
+    FADE_TIME: 0.8,          // 乗ってから消えるまで（秒）。ひと跳ねは約0.93秒なので、同じ雲には2回乗れない
+    FADE_RETURN: 2.0,        // 消えてから戻ってくるまで（秒）
+    // しかけ③：星のかけら（道から少しはずれたところに浮かぶ。取りに行くか、安全にいくか）
+    STAR_FROM_M: 10,         // この高さ(m)から出はじめる
+    STAR_RATE: 0.45,         // 雲ひとつにつき、星のかけらが出る割合（0でしかけなし）
+    STAR_OFFSET_MIN: 60,     // 雲から横にはずれる幅（最小）
+    STAR_OFFSET_MAX: 105,    // 　〃（最大。110をこえると、取ったあと元の雲に戻れなくなる）
+    STAR_RISE_MIN: 50,       // 雲から上にはなれる高さ（最小）
+    STAR_RISE_MAX: 110,      // 　〃（最大。跳ねる高さ136より小さくしておく）
+    STAR_RADIUS: 34,         // 取れる近さ（ルナの体のまんなかから）
+    STAR_SPRITE_TIME: 0.4,   // 取ったときの絵を見せる時間（秒）
+    // しかけ④：だんだん速く（最後の10秒は、空ぜんたいが速くなる。残り時間の進み方は変わらない）
+    RUSH_SECONDS: 10,        // 残り何秒から速くなるか（0でしかけなし）
+    RUSH_SPEED: 1.35,        // いちばん速いときの倍率（ルナの跳ね方も、動く雲も、消える雲も、同じだけ速くなる）
+    RUSH_RAMP: 4,            // 何秒かけて、いちばん速いところまで上げるか
+    STAR_POINTS: 10,         // 点の数え方：点 ＝ 高さ(m) ＋ 星のかけら × この数（2026-11-22 決定）
+    UNITS_PER_M: 10,        // 高さ1mあたりの目もり
+    FALL_RULE: 'retry',      // 落ちたとき：'retry'＝少し下からやり直し（'end' にすると、その場で終わり）
+  };
+  const BEST_KEY = 'luna-jump-proto-best-points'; // 点（高さ＋★×10）での自己ベスト
+
+  // ============================================================
+  // 3. 画面
+  // ============================================================
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), canvas = $('c'), ctx = canvas.getContext('2d');
+  let DPR = 1, S = 1, VH = 640; // S: 目もり→画面px、VH: 目もりで数えた画面の高さ
+
+  function resize() {
+    // 埋めこまれた枠の中などで、開いた瞬間に大きさが0と返ることがある。そのときは仮の大きさで始める
+    const vw = window.innerWidth || document.documentElement.clientWidth || 360;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 640;
+    const w = Math.round(Math.min(vw, vh * 0.62, 560));
+    stage.style.width = w + 'px';
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(w * DPR);
+    canvas.height = Math.round(vh * DPR);
+    S = w / CFG.WORLD_W;
+    VH = vh / S;
+  }
+  // 大きさが変わったら測り直す。遊ぶ前（タイトル画面）なら、雲も置き直す
+  window.addEventListener('resize', () => { resize(); if (state === 'title' && clouds) reset(); });
+  resize();
+
+  // ============================================================
+  // 4. 入力（画面の左右をさわる／← → キー）
+  // ============================================================
+  const pointers = new Map(); // pointerId → -1（左）/ +1（右）
+  let lastPointerDir = 0;
+  const keys = { left: false, right: false, last: 0 };
+
+  function sideOf(e) { return e.clientX < window.innerWidth / 2 ? -1 : 1; }
+  window.addEventListener('pointerdown', e => {
+    if (e.target.closest('button, input, .ranks')) return;
+    pointers.set(e.pointerId, sideOf(e)); lastPointerDir = sideOf(e);
+  });
+  window.addEventListener('pointermove', e => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, sideOf(e)); lastPointerDir = sideOf(e);
+  });
+  const release = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size) lastPointerDir = [...pointers.values()].pop();
+  };
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', release);
+  window.addEventListener('blur', () => { pointers.clear(); keys.left = keys.right = false; });
+  window.addEventListener('contextmenu', e => e.preventDefault());
+
+  function keyDir(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') return -1;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') return 1;
+    return 0;
+  }
+  const typing = e => e.target instanceof HTMLInputElement; // 名前を打っているあいだは、ゲームのキーにしない
+  window.addEventListener('keydown', e => {
+    if (typing(e)) return;
+    const d = keyDir(e);
+    if (d) { (d < 0 ? (keys.left = true) : (keys.right = true)); keys.last = d; e.preventDefault(); return; }
+    if ((e.key === ' ' || e.key === 'Enter') && state !== 'play' && !e.repeat && $('rankScreen').hidden) { e.preventDefault(); start(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (typing(e)) return;
+    const d = keyDir(e);
+    if (d < 0) keys.left = false;
+    if (d > 0) keys.right = false;
+  });
+
+  function inputDir() {
+    if (keys.left && keys.right) return keys.last;
+    if (keys.left) return -1;
+    if (keys.right) return 1;
+    return pointers.size ? lastPointerDir : 0;
+  }
+
+  // ============================================================
+  // 5. ゲームの中身
+  //    高さ y は「上がプラス」。ルナの x, y は足もとの位置
+  // ============================================================
+  let state = 'title'; // 'title' | 'play' | 'end'
+  let timeLeft = CFG.PLAY_SECONDS;
+  let stars = [], sparks = [], starCount = 0;
+  let luna, clouds, topY, lastCloud, lastSolid, peak, cam, camTarget, flash = 0;
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const camFloor = () => -VH * 0.18; // いちばん下の雲が、画面の下から18%に見える位置
+
+  function reset() {
+    const ground = { x: CFG.WORLD_W / 2, y: 0, w: CFG.WORLD_W + 80, dip: 0, ground: true };
+    clouds = [ground];
+    lastCloud = lastSolid = ground;
+    topY = 0;
+    luna = { x: CFG.WORLD_W / 2, y: 0, vx: 0, vy: 0, landT: 0.25, starT: 0 };
+    stars = []; sparks = []; starCount = 0;
+    peak = 0;
+    cam = camTarget = camFloor();
+    timeLeft = CFG.PLAY_SECONDS;
+    flash = 0;
+    growClouds();
+  }
+
+  // 上のほうへ雲を足していく（いまは動かない雲だけ。しかけはここに足す）
+  function growClouds() {
+    const half = CFG.CLOUD_W / 2 + 8;
+    while (topY < cam + VH + 240) {
+      const prev = clouds[clouds.length - 1];
+      const px = prev.ground ? CFG.WORLD_W / 2 : prev.x;
+      let x = px + rand(-CFG.CLOUD_SHIFT_MAX, CFG.CLOUD_SHIFT_MAX);
+      x = Math.max(half, Math.min(CFG.WORLD_W - half, x));
+      topY += rand(CFG.CLOUD_GAP_MIN, CFG.CLOUD_GAP_MAX);
+      const c = { x, y: topY, w: CFG.CLOUD_W, dip: 0, vx: 0 };
+      if (topY >= CFG.MOVING_FROM_M * CFG.UNITS_PER_M && !prev.vx && Math.random() < CFG.MOVING_RATE) {
+        c.vx = rand(CFG.MOVING_SPEED_MIN, CFG.MOVING_SPEED_MAX) * (Math.random() < 0.5 ? -1 : 1);
+      }
+      else if (topY >= CFG.FADE_FROM_M * CFG.UNITS_PER_M && !prev.fade && Math.random() < CFG.FADE_RATE) {
+        c.fade = true; c.fadeT = 0; c.gone = 0;
+      }
+      clouds.push(c);
+      // 星のかけら：下の雲(prev)から跳ねれば届くけれど、次の雲(c)とは反対がわに置く
+      // （道のとちゅうに置くと、何もしなくても取れてしまうので）
+      if (!prev.ground && prev.y >= CFG.STAR_FROM_M * CFG.UNITS_PER_M && Math.random() < CFG.STAR_RATE) {
+        const side = x >= prev.x ? -1 : 1;
+        const sx = Math.max(28, Math.min(CFG.WORLD_W - 28, prev.x + side * rand(CFG.STAR_OFFSET_MIN, CFG.STAR_OFFSET_MAX)));
+        if (Math.abs(sx - prev.x) >= CFG.STAR_OFFSET_MIN) { // 端に近くて、はずす場所が無いときは置かない
+          stars.push({ x: sx, y: prev.y + rand(CFG.STAR_RISE_MIN, CFG.STAR_RISE_MAX), ph: Math.random() * 6.28 });
+        }
+      }
+    }
+    // 画面の下に流れた雲は片づける（やり直し用に、最後に乗った「消えない雲」だけは残す）
+    clouds = clouds.filter(c => c.y > cam - 120 || c === lastSolid);
+    stars = stars.filter(st => st.y > cam - 120);
+  }
+
+  // 当たり判定：足もとの細い幅だけで、雲の上の面をまたいだかを見る
+  function findLanding(prevY, y) {
+    for (const c of clouds) {
+      if (prevY < c.y || y > c.y || c.gone > 0) continue;
+      const half = c.w / 2 - 4;
+      if (luna.x + CFG.FOOT_HALF > c.x - half && luna.x - CFG.FOOT_HALF < c.x + half) return c;
+    }
+    return null;
+  }
+
+  function retryFromLastCloud() {
+    // 戻る先は、最後に乗った「消えない雲」（消える雲だと、戻ったときに無いことがある）
+    luna.x = lastSolid.ground ? CFG.WORLD_W / 2 : lastSolid.x;
+    luna.y = lastSolid.y + 110;
+    luna.vx = 0; luna.vy = 0; luna.landT = 0;
+    cam = camTarget = Math.max(camFloor(), lastSolid.y - VH * 0.3);
+    flash = 1;
+    growClouds();
+  }
+
+  // 最後の10秒の速さ（ふだんは1。残り RUSH_SECONDS 秒から、RUSH_RAMP 秒かけて RUSH_SPEED まで上がる）
+  function rushScale() {
+    if (state !== 'play' || timeLeft > CFG.RUSH_SECONDS) return 1;
+    return 1 + (CFG.RUSH_SPEED - 1) * Math.min(1, (CFG.RUSH_SECONDS - timeLeft) / CFG.RUSH_RAMP);
+  }
+
+  function step(dt) {
+    if (state === 'end') return;
+    if (state === 'play') {
+      timeLeft -= dt;
+      if (timeLeft <= 0) { timeLeft = 0; finish(); return; }
+    }
+    dt *= rushScale(); // ここから下の動きは、最後の10秒だけ速く進む（上の残り時間は、ふつうの速さのまま）
+
+    // 動く雲（端まで行ったら折り返す。乗っているあいだは、ルナも一緒に運ばれる）
+    const cloudHalf = CFG.CLOUD_W / 2 + 8;
+    for (const c of clouds) {
+      if (!c.vx) continue;
+      c.x += c.vx * dt;
+      if (c.x < cloudHalf) { c.x = cloudHalf; c.vx = Math.abs(c.vx); }
+      if (c.x > CFG.WORLD_W - cloudHalf) { c.x = CFG.WORLD_W - cloudHalf; c.vx = -Math.abs(c.vx); }
+      if (luna.landT > 0 && lastCloud === c) luna.x += c.vx * dt;
+    }
+
+    // 消える雲（乗られてから少しして消え、しばらくすると戻る）
+    for (const c of clouds) {
+      if (!c.fade) continue;
+      if (c.fadeT > 0) { c.fadeT -= dt; if (c.fadeT <= 0) { c.fadeT = 0; c.gone = CFG.FADE_RETURN; } }
+      else if (c.gone > 0) c.gone = Math.max(0, c.gone - dt);
+    }
+
+    // 左右
+    const dir = state === 'play' ? inputDir() : 0;
+    luna.vx += (dir * CFG.MOVE_SPEED - luna.vx) * Math.min(1, dt * CFG.MOVE_EASE);
+    luna.x += luna.vx * dt;
+    // 画面の端で止まる（反対側には出ない）
+    if (luna.x < CFG.EDGE_MARGIN) { luna.x = CFG.EDGE_MARGIN; luna.vx = 0; }
+    if (luna.x > CFG.WORLD_W - CFG.EDGE_MARGIN) { luna.x = CFG.WORLD_W - CFG.EDGE_MARGIN; luna.vx = 0; }
+
+    // 上下
+    if (luna.landT > 0) {
+      luna.landT -= dt;
+      if (luna.landT <= 0) luna.vy = CFG.JUMP_SPEED; // ぽん、と跳ねる
+    } else {
+      const prevY = luna.y;
+      luna.vy -= CFG.GRAVITY * dt;
+      luna.y += luna.vy * dt;
+      if (luna.vy < 0) {
+        const c = findLanding(prevY, luna.y);
+        if (c) {
+          luna.y = c.y; luna.vy = 0; luna.landT = CFG.LAND_HOLD;
+          c.dip = 1; lastCloud = c;
+          if (c.fade) { if (c.fadeT <= 0) c.fadeT = CFG.FADE_TIME; } // 消えるまでの時間が動きだす
+          else lastSolid = c;
+        }
+      }
+    }
+    if (state === 'play') peak = Math.max(peak, luna.y);
+
+    // 星のかけら（ルナの体のまんなかが近づいたら取れる）
+    if (luna.starT > 0) luna.starT -= dt;
+    if (state === 'play') {
+      const bx = luna.x, by = luna.y + CFG.LUNA_H * 0.45;
+      for (let i = stars.length - 1; i >= 0; i--) {
+        const st = stars[i];
+        if (Math.hypot(st.x - bx, st.y - by) > CFG.STAR_RADIUS) continue;
+        stars.splice(i, 1);
+        starCount++;
+        luna.starT = CFG.STAR_SPRITE_TIME;
+        for (let k = 0; k < 10; k++) {
+          const a = k / 10 * 6.2832;
+          sparks.push({ x: st.x, y: st.y, vx: Math.cos(a) * rand(60, 130), vy: Math.sin(a) * rand(60, 130), life: 0.5 });
+        }
+      }
+    }
+    for (const sp of sparks) { sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.life -= dt; }
+    if (sparks.length) sparks = sparks.filter(sp => sp.life > 0);
+
+    // カメラは上へだけついていく
+    camTarget = Math.max(camTarget, luna.y - VH * 0.42);
+    cam += (camTarget - cam) * Math.min(1, dt * 8);
+
+    // 画面の下へ落ちた
+    if (luna.y < cam - 50) {
+      if (CFG.FALL_RULE === 'end' && state === 'play') { finish(); return; }
+      retryFromLastCloud();
+    }
+
+    for (const c of clouds) if (c.dip > 0) c.dip = Math.max(0, c.dip - dt * 5);
+    if (flash > 0) flash = Math.max(0, flash - dt * 2.5);
+    growClouds();
+  }
+
+  // いま、どの絵を見せるか（切りかえの決まりはここだけ）
+  function currentSprite() {
+    if (luna.landT > 0) return 'land';
+    if (luna.starT > 0) return 'star';
+    if (luna.vy < -CFG.FALL_SPRITE_SPEED) return 'fall';
+    if (luna.vx > CFG.SIDE_SPRITE_SPEED) return 'right';
+    if (luna.vx < -CFG.SIDE_SPRITE_SPEED) return 'left';
+    return 'jump';
+  }
+
+  // ============================================================
+  // 6. 描く
+  // ============================================================
+  const skyStars = Array.from({ length: 90 }, () => ({
+    x: Math.random() * CFG.WORLD_W, y: Math.random() * 1200,
+    r: rand(0.5, 1.6), tw: Math.random() * 6.28, far: rand(0.05, 0.2),
+  }));
+  const Y = y => VH - (y - cam); // 高さ → 画面の上からの位置
+
+  function drawSky(t) {
+    const g = ctx.createLinearGradient(0, 0, 0, VH);
+    g.addColorStop(0, '#0b0c2a');
+    g.addColorStop(0.55, '#1c1a50');
+    g.addColorStop(1, '#3b2c72');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, CFG.WORLD_W, VH);
+
+    // 月（のぼるほど、ほんの少しだけ下がって見える）
+    const mx = CFG.WORLD_W * 0.76, my = 110 + Math.min(60, cam * 0.01);
+    const halo = ctx.createRadialGradient(mx, my, 10, mx, my, 120);
+    halo.addColorStop(0, 'rgba(255, 240, 200, .32)');
+    halo.addColorStop(1, 'rgba(255, 240, 200, 0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(mx - 120, my - 120, 240, 240);
+    ctx.fillStyle = '#fff3d0';
+    ctx.beginPath(); ctx.arc(mx, my, 30, 0, 6.2832); ctx.fill();
+
+    // 星
+    for (const s of skyStars) {
+      const sy = (((s.y + cam * s.far) % 1200) + 1200) % 1200;
+      if (sy > VH) continue;
+      ctx.globalAlpha = 0.45 + 0.4 * Math.sin(t * 1.6 + s.tw);
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(s.x, sy, s.r, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCloud(c) {
+    const y = Y(c.y) + c.dip * 4; // 乗られた瞬間、少しだけしずむ
+    if (y < -40 || y > VH + 60) return;
+    const w = c.w, h = 22;
+    // 消える雲は、うすい紫。乗られると点滅しながらうすくなり、消えているあいだは輪かくだけ
+    let alpha = 1;
+    if (c.fade) {
+      if (c.gone > 0.35) alpha = 0.12;
+      else if (c.gone > 0) alpha = 0.12 + 0.88 * (1 - c.gone / 0.35);
+      else if (c.fadeT > 0) alpha = (0.35 + 0.65 * c.fadeT / CFG.FADE_TIME) * (Math.sin(c.fadeT * 40) > 0 ? 1 : 0.6);
+    }
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(120, 110, 200, .35)'; // 下側のかげ
+    ctx.beginPath(); ctx.ellipse(c.x, y + h * 0.75, w * 0.46, h * 0.42, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = c.fade ? 'rgba(214, 190, 255, .96)' : 'rgba(250, 248, 255, .96)';
+    ctx.beginPath();
+    if (c.ground) {
+      for (let x = c.x - w / 2; x <= c.x + w / 2; x += 34) ctx.ellipse(x, y + 8, 30, 16, 0, 0, 6.2832);
+      ctx.rect(c.x - w / 2, y + 8, w, 400);
+    } else {
+      ctx.ellipse(c.x, y + h * 0.5, w * 0.5, h * 0.45, 0, 0, 6.2832);
+      ctx.ellipse(c.x - w * 0.22, y + h * 0.3, w * 0.24, h * 0.5, 0, 0, 6.2832);
+      ctx.ellipse(c.x + w * 0.16, y + h * 0.22, w * 0.28, h * 0.6, 0, 0, 6.2832);
+    }
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawStars(t) {
+    for (const st of stars) {
+      const x = st.x, y = Y(st.y) + Math.sin(t * 3 + st.ph) * 3; // ふわふわ浮く
+      if (y < -30 || y > VH + 30) continue;
+      const halo = ctx.createRadialGradient(x, y, 2, x, y, 26);
+      halo.addColorStop(0, 'rgba(255, 221, 130, .55)');
+      halo.addColorStop(1, 'rgba(255, 221, 130, 0)');
+      ctx.fillStyle = halo;
+      ctx.fillRect(x - 26, y - 26, 52, 52);
+      const r = 12 + Math.sin(t * 5 + st.ph) * 1.2;
+      ctx.fillStyle = '#ffe28a';
+      ctx.beginPath(); // 4つの角がある、きらっとした形
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * 6.2832 - 1.5708, rr = i % 2 ? r * 0.38 : r;
+        ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fffbe6';
+      ctx.beginPath(); ctx.arc(x, y, r * 0.22, 0, 6.2832); ctx.fill();
+    }
+    for (const sp of sparks) {
+      ctx.globalAlpha = Math.max(0, sp.life / 0.5);
+      ctx.fillStyle = '#ffe9a8';
+      ctx.beginPath(); ctx.arc(sp.x, Y(sp.y), 2.2, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawLunaAt(x, name) {
+    const img = sprites[name] || sprites.jump;
+    const k = CFG.LUNA_H / SPRITE_H;
+    const w = SPRITE_W * k, h = SPRITE_H * k, foot = SPRITE_FOOT * k;
+    const squash = luna.landT > 0 ? 0.05 : 0; // 着地のとき、足もとを軸にほんの少しつぶれる
+    ctx.save();
+    ctx.translate(x, Y(luna.y) + 5); // 足が雲に少しうまるくらいに
+    ctx.scale(1 + squash, 1 - squash);
+    if (img) ctx.drawImage(img, -w / 2, -(h - foot), w, h);
+    else { ctx.fillStyle = '#d9ccff'; ctx.fillRect(-14, -60, 28, 60); } // 絵が無いときの仮の形
+    ctx.restore();
+  }
+
+  function drawLuna() {
+    const name = currentSprite();
+    drawLunaAt(luna.x, name);
+  }
+
+  function draw(t) {
+    ctx.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
+    drawSky(t);
+    for (const c of clouds) drawCloud(c);
+    drawStars(t);
+    drawLuna();
+
+    // さわっている側を、ほんのり明るく
+    const dir = state === 'play' ? inputDir() : 0;
+    if (dir) {
+      const g = ctx.createLinearGradient(dir < 0 ? 0 : CFG.WORLD_W, 0, dir < 0 ? 70 : CFG.WORLD_W - 70, 0);
+      g.addColorStop(0, 'rgba(255, 255, 255, .10)');
+      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(dir < 0 ? 0 : CFG.WORLD_W - 70, 0, 70, VH);
+    }
+    // 最後の10秒：流れる光のすじと、はじまりの合図
+    const rush = (rushScale() - 1) / Math.max(0.01, CFG.RUSH_SPEED - 1);
+    if (rush > 0) {
+      ctx.strokeStyle = `rgba(255, 236, 190, ${0.22 * rush})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < 14; i++) {
+        const x = (i * 97 + 31) % CFG.WORLD_W;
+        const y = ((t * (520 + i * 37) + i * 211) % (VH + 120)) - 60;
+        ctx.moveTo(x, y); ctx.lineTo(x, y + 46);
+      }
+      ctx.stroke();
+      const since = CFG.RUSH_SECONDS - timeLeft;
+      if (since < 1.6) {
+        ctx.globalAlpha = Math.min(1, since * 5, (1.6 - since) * 2.5);
+        ctx.fillStyle = '#ffd36e';
+        ctx.font = '900 22px "Zen Maru Gothic", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0, 0, 0, .7)'; ctx.shadowBlur = 10;
+        ctx.fillText(`あと${CFG.RUSH_SECONDS}秒　空が速くなるよ`, CFG.WORLD_W / 2, VH * 0.3);
+        ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+      }
+    }
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(235, 228, 255, ${flash * 0.3})`;
+      ctx.fillRect(0, 0, CFG.WORLD_W, VH);
+    }
+  }
+
+  // ============================================================
+  // 7. はじまりと終わり
+  // ============================================================
+  function loadBest() { try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; } }
+  function saveBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch {} }
+  const meters = () => Math.max(0, Math.floor(peak / CFG.UNITS_PER_M));
+  const points = () => meters() + starCount * CFG.STAR_POINTS; // ランキングで競う数字
+
+  function start() {
+    reset();
+    state = 'play';
+    $('titleScreen').hidden = true;
+    $('resultScreen').hidden = true;
+    $('rankScreen').hidden = true;
+    $('hud').hidden = false;
+  }
+
+  function finish() {
+    state = 'end';
+    const m = meters(), pts = points(), best = loadBest();
+    if (pts > best) saveBest(pts);
+    // がんばったあとの絵（読みこみ済みの絵を使う。無ければ出さない）
+    const pic = $('resultLuna');
+    pic.hidden = !sprites.finish;
+    if (sprites.finish) { pic.src = sprites.finish.src; pic.classList.remove('pop'); void pic.offsetWidth; pic.classList.add('pop'); }
+    $('resultPoints').textContent = pts;
+    $('resultHeight').textContent = m;
+    $('resultStars').textContent = starCount;
+    $('resultStarPoints').textContent = CFG.STAR_POINTS;
+    $('best').textContent = pts > best && best > 0 ? `じぶんの最高をこえました（これまで ${best}点）`
+      : `じぶんの最高：${Math.max(pts, best)}点`;
+    $('hud').hidden = true;
+    $('resultScreen').hidden = false;
+    afterPlay();
+  }
+
+  $('startBtn').addEventListener('click', start);
+  $('againBtn').addEventListener('click', start);
+
+  // ============================================================
+  // 7.5 ランキング
+  // ============================================================
+  // 記録は、星灯りエイムと同じ Cloudflare の窓口（articles リポジトリの dev/apps/hoshiakari-ranking）に送る。
+  // 窓口は公式サイトからの記録しか受けつけない。手もとで開いたときは「つながりませんでした」と出て、
+  // じぶんの最高だけがこのブラウザに残る（それで正しい）。
+  const RANK_API = 'https://hoshiakari-ranking.pages.dev/api/scores';
+  const RANK_MODE = 'luna';
+  const RANK_INPUT = 'touch';   // ルナは操作で順位を分けない。窓口の決まりで何か1つ入れるので、これに固定
+  const RANK_MAX = 1500;        // 窓口が受けつける上限（scores.js の luna と同じ数にする）
+  const ERR = {
+    name_ng: 'その名前は使えません。ちがう名前にしてください',
+    name_long: '12文字までにしてください',
+    name_empty: '1文字以上入れてください',
+    slow_down: '少し時間をおいてから、もう一度どうぞ',
+    forbidden: 'このブラウザの記録と名前が合いませんでした',
+    offline: 'ランキングにつながりませんでした。記録はこのブラウザに残っています',
+  };
+  // 番号・合言葉・名前は、星灯りエイムと同じ場所に置く（公式サイトでは、同じ人・同じ名前として載る）
+  const shared = {
+    get(k) { try { return localStorage.getItem('hoshiaim-' + k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem('hoshiaim-' + k, v); } catch {} },
+  };
+  const ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
+  const randId = () => {
+    const a = new Uint8Array(24);
+    crypto.getRandomValues(a);
+    return Array.from(a, b => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'[b & 63]).join('');
+  };
+  // pid はランキングで「あなた」を見分ける番号、secret は本人だけが持つ合言葉。どちらもこのブラウザにだけ残る
+  let pid = shared.get('pid'), secret = shared.get('secret');
+  if (!ID_RE.test(pid || '') || !ID_RE.test(secret || '')) { pid = randId(); secret = randId(); shared.set('pid', pid); shared.set('secret', secret); }
+  const tidyName = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 12);
+  let myName = tidyName(shared.get('nick'));
+  $('nick').value = myName;
+
+  let board = { rows: null, mine: null, state: 'loading' }; // state: loading | ok | offline
+  let fetchSeq = 0, rankFrom = 'title';
+
+  async function loadBoard() {
+    const seq = ++fetchSeq;
+    if (!board.rows) board.state = 'loading';
+    renderBoard();
+    try {
+      const r = await fetch(`${RANK_API}?mode=${RANK_MODE}&input=${RANK_INPUT}&pid=${encodeURIComponent(pid)}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error(String(r.status));
+      const b = await r.json();
+      if (seq !== fetchSeq) return;
+      board = { rows: Array.isArray(b.rows) ? b.rows : [], mine: b.mine || null, state: 'ok' };
+    } catch {
+      if (seq !== fetchSeq) return;
+      board = { rows: null, mine: null, state: 'offline' };
+    }
+    renderBoard();
+  }
+
+  // じぶんの最高を送る。窓口のほうで「前より良いときだけ上書き」されるので、毎回送ってよい
+  let sending = Promise.resolve();
+  function send() {
+    const best = loadBest();
+    if (!myName) return Promise.resolve(null);
+    const ok = Number.isInteger(best) && best > 0 && best <= RANK_MAX;
+    const body = JSON.stringify({ pid, secret, name: myName, scores: ok ? [{ mode: RANK_MODE, input: RANK_INPUT, value: best }] : [] });
+    sending = sending.then(async () => {
+      try {
+        const r = await fetch(RANK_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+        const b = await r.json().catch(() => ({}));
+        return r.ok ? { ok: true } : { ok: false, error: b.error || 'offline' };
+      } catch { return { ok: false, error: 'offline' }; }
+    });
+    return sending;
+  }
+  function pushScore() {
+    return send().then(res => {
+      if (res && !res.ok) {
+        $('nickMsg').textContent = ERR[res.error] || ERR.offline;
+        if (res.error && res.error.startsWith('name_')) { myName = ''; shared.set('nick', ''); }
+      }
+      return loadBoard();
+    });
+  }
+
+  function myRank() {
+    if (board.state !== 'ok') return null;
+    const i = board.rows.findIndex(r => r.me);
+    if (i >= 0) return i + 1;
+    return board.mine ? board.mine.rank : null;
+  }
+
+  function renderBoard() {
+    const online = board.state === 'ok';
+    const list = $('ranks');
+    list.textContent = '';
+    const addRow = (rank, r) => {
+      const li = document.createElement('li');
+      if (r.me) li.classList.add('me');
+      const no = document.createElement('span'); no.className = 'no'; no.textContent = rank + '位';
+      const who = document.createElement('span'); who.className = 'who'; who.textContent = r.name;
+      if (r.me) { const sm = document.createElement('small'); sm.textContent = 'あなた'; who.append(sm); }
+      const val = document.createElement('span'); val.className = 'val'; val.textContent = r.value + '点';
+      li.append(no, who, val);
+      list.append(li);
+    };
+    const note = text => { const li = document.createElement('li'); li.className = 'empty'; li.textContent = text; list.append(li); };
+    if (online) {
+      if (!board.rows.length) note('まだだれもいません。最初のひとりになってみませんか。');
+      board.rows.forEach((r, n) => addRow(n + 1, { name: tidyName(r.name) || 'ななしの星', value: r.value, me: !!r.me }));
+      if (board.mine) addRow(board.mine.rank, { name: myName || 'あなた', value: board.mine.value, me: true });
+    } else if (board.state === 'offline') {
+      const best = loadBest();
+      note(best > 0 ? `ランキングにつながりませんでした。じぶんの最高は ${best}点 です。` : 'ランキングにつながりませんでした。');
+    } else {
+      note('ランキングを読みこんでいます。');
+    }
+    $('rankNote').textContent = board.state === 'offline' ? '記録はこのブラウザに残っています。'
+      : myName ? 'じぶんの最高の点が、自動でランキングに載ります。'
+      : 'ニックネームを入れると、じぶんの最高の点がランキングに載ります。';
+
+    // 結果画面のひとこと
+    const rank = myRank(), line = $('rankLine');
+    if (board.state !== 'ok') line.textContent = '';
+    else if (!myName) line.textContent = '名前を入れると、ランキングに載ります';
+    else line.textContent = rank ? `ランキング ${rank}位` : '';
+  }
+
+  function afterPlay() {
+    $('rankLine').textContent = '';
+    if (myName) pushScore(); else loadBoard();
+  }
+  function openRank(from) {
+    rankFrom = from;
+    $('titleScreen').hidden = true;
+    $('resultScreen').hidden = true;
+    $('rankScreen').hidden = false;
+    $('nickMsg').textContent = '';
+    loadBoard();
+  }
+  $('rankBtnTitle').addEventListener('click', () => openRank('title'));
+  $('rankBtnResult').addEventListener('click', () => openRank('result'));
+  $('rankBack').addEventListener('click', () => {
+    $('rankScreen').hidden = true;
+    $(rankFrom === 'result' ? 'resultScreen' : 'titleScreen').hidden = false;
+  });
+  $('nickForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = tidyName($('nick').value);
+    if (!v) { $('nickMsg').textContent = ERR.name_empty; return; }
+    myName = v; shared.set('nick', v); $('nick').value = v;
+    $('nickMsg').textContent = '保存しました';
+    $('nick').blur();
+    pushScore();
+  });
+
+  // ============================================================
+  // 8. まわす（動きは1/120秒きざみで計算して、機種で跳ね方が変わらないようにする）
+  // ============================================================
+  const STEP = 1 / 120;
+  let prevT = 0, acc = 0;
+  function frame(ms) {
+    const t = ms / 1000;
+    acc += Math.min(0.05, t - prevT || 0);
+    prevT = t;
+    while (acc >= STEP) { step(STEP); acc -= STEP; }
+    if (state === 'play') {
+      $('points').textContent = points();
+      $('height').textContent = meters();
+      $('stars').textContent = starCount;
+      $('time').textContent = timeLeft.toFixed(1);
+      $('time').classList.toggle('low', timeLeft <= CFG.RUSH_SECONDS);
+    }
+    draw(t);
+    requestAnimationFrame(frame);
+  }
+
+  reset();
+  loadSprites().then(() => requestAnimationFrame(frame));
+
+})();
+</script>
+</body>
+</html>
