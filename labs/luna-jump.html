@@ -30,7 +30,12 @@ html, body {
   touch-action: none; overscroll-behavior: none;
 }
 /* 遊ぶ場所は、画面のまんなかの縦長の列（スマホでは画面いっぱい） */
-.stage { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); overflow: hidden; }
+/* 横幅はCSSで決める（プログラムで測った幅を入れると、スマホのアプリ内ブラウザで、
+   画面より広い幅が返ってきたときに、そのまま広がって右にずれた。2026-11-27） */
+.stage {
+  position: fixed; top: 0; bottom: 0; left: 0; right: 0; margin: 0 auto;
+  width: min(100%, 62vh, 560px); overflow: hidden;
+}
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 .hud {
@@ -260,10 +265,10 @@ button.sub-btn { font-size: 15px; padding: 10px 16px; }
 
   function resize() {
     // 埋めこまれた枠の中などで、開いた瞬間に大きさが0と返ることがある。そのときは仮の大きさで始める
-    const vw = window.innerWidth || document.documentElement.clientWidth || 360;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 640;
-    const w = Math.round(Math.min(vw, vh * 0.62, 560));
-    stage.style.width = w + 'px';
+    // 念のため、端末の画面より広くはしない
+    if (window.screen && screen.width) stage.style.maxWidth = screen.width + 'px';
+    const w = stage.clientWidth || 360;
+    const vh = stage.clientHeight || 640;
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(w * DPR);
     canvas.height = Math.round(vh * DPR);
@@ -271,7 +276,13 @@ button.sub-btn { font-size: 15px; padding: 10px 16px; }
     VH = vh / S;
   }
   // 大きさが変わったら測り直す。遊ぶ前（タイトル画面）なら、雲も置き直す
-  window.addEventListener('resize', () => { resize(); if (state === 'title' && clouds) reset(); });
+  const onResize = () => {
+    const w0 = canvas.width, h0 = canvas.height;
+    resize();
+    if ((canvas.width !== w0 || canvas.height !== h0) && state === 'title' && clouds) reset();
+  };
+  window.addEventListener('resize', onResize);
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe(stage);
   resize();
 
   // ============================================================
@@ -281,7 +292,7 @@ button.sub-btn { font-size: 15px; padding: 10px 16px; }
   let lastPointerDir = 0;
   const keys = { left: false, right: false, last: 0 };
 
-  function sideOf(e) { return e.clientX < window.innerWidth / 2 ? -1 : 1; }
+  function sideOf(e) { const r = stage.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? -1 : 1; }
   window.addEventListener('pointerdown', e => {
     if (e.target.closest('button, input, .ranks')) return;
     pointers.set(e.pointerId, sideOf(e)); lastPointerDir = sideOf(e);
