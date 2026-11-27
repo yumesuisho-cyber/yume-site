@@ -56,6 +56,8 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 
 .screen {
   position: absolute; inset: 0; display: grid; place-items: start center;
+  /* 列の幅を画面の幅に止める。これが無いと、iPhoneでは長い1行の文に合わせて列が画面より広がり、カードが右にずれた（2026-11-27） */
+  grid-template-columns: minmax(0, 1fr);
   padding: max(16px, 9vh) 16px 16px;
 }
 .screen[hidden] { display: none; }
@@ -894,7 +896,7 @@ button.sub-btn { font-size: 15px; padding: 10px 16px; }
   loadSprites().then(() => requestAnimationFrame(frame));
 
   // ずれの正体を測る表示（URLの最後に ?debug=1 を付けたときだけ出る）
-  const BUILD = '2026-11-27d';
+  const BUILD = '2026-11-27e';
   if (/[?&]debug/.test(location.search)) {
     const box = document.createElement('div');
     box.style.cssText = 'position:fixed;left:0;bottom:0;width:300px;z-index:99;padding:6px 8px;font:11px/1.5 monospace;color:#fff;background:rgba(0,0,0,.85);pointer-events:none;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text';
