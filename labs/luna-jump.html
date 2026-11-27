@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <title>ルナの夜空のぼり｜30秒のジャンプゲーム</title>
 <meta name="description" content="ぽんぽん跳ねるルナを左右に動かして、雲をのぼる30秒のゲーム。高さと星のかけらで点を競います。スマホでそのまま遊べます。">
 <meta name="robots" content="noindex">
@@ -23,8 +23,9 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body {
-  margin: 0; height: 100%; overflow: hidden;
+  margin: 0; height: 100%; width: 100%; overflow: hidden;
   background: var(--bg); color: var(--fg); font-family: var(--font);
   -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
   touch-action: none; overscroll-behavior: none;
@@ -856,6 +857,8 @@ button.sub-btn { font-size: 15px; padding: 10px 16px; }
     $('rankScreen').hidden = true;
     $(rankFrom === 'result' ? 'resultScreen' : 'titleScreen').hidden = false;
   });
+  const settle = () => setTimeout(() => { window.scrollTo(0, 0); onResize(); }, 60);
+  $('nick').addEventListener('blur', settle);
   $('nickForm').addEventListener('submit', e => {
     e.preventDefault();
     const v = tidyName($('nick').value);
@@ -889,6 +892,29 @@ button.sub-btn { font-size: 15px; padding: 10px 16px; }
 
   reset();
   loadSprites().then(() => requestAnimationFrame(frame));
+
+  // ずれの正体を測る表示（URLの最後に ?debug=1 を付けたときだけ出る）
+  const BUILD = '2026-11-27d';
+  if (/[?&]debug/.test(location.search)) {
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:0;bottom:0;width:300px;z-index:99;padding:6px 8px;font:11px/1.5 monospace;color:#fff;background:rgba(0,0,0,.85);pointer-events:none;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text';
+    document.body.append(box);
+    const n = v => typeof v === 'number' ? Math.round(v * 100) / 100 : v;
+    setInterval(() => {
+      const vv = window.visualViewport || {}, r = stage.getBoundingClientRect(), de = document.documentElement;
+      const card = document.querySelector('.screen:not([hidden]) .card');
+      const cr = card ? card.getBoundingClientRect() : { left: '-', width: '-' };
+      box.textContent = [
+        `build ${BUILD}`,
+        `inner ${innerWidth}x${innerHeight}  screen ${screen.width}x${screen.height}  dpr ${n(devicePixelRatio)}`,
+        `doc client ${de.clientWidth}x${de.clientHeight}  scrollW ${de.scrollWidth}  scroll ${n(scrollX)},${n(scrollY)}`,
+        `vv ${n(vv.width)}x${n(vv.height)} scale ${n(vv.scale)} off ${n(vv.offsetLeft)},${n(vv.offsetTop)}`,
+        `stage left ${n(r.left)} w ${n(r.width)} h ${n(r.height)}`,
+        `card left ${n(cr.left)} w ${n(cr.width)}`,
+        navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 110),
+      ].join('\n');
+    }, 400);
+  }
 
 })();
 </script>
